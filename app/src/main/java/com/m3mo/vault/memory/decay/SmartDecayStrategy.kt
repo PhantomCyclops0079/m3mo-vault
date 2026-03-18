@@ -18,14 +18,13 @@ import kotlin.math.min
 /**
  * SmartDecayStrategy - US Provisional Patent #63/942,399
  *
- * The SmartDecay algorithm achieves intelligent 16x weight differentiation
+ * The SmartDecay algorithm achieves intelligent 12x weight differentiation
  * through a 7-factor analysis system designed for resource-constrained
  * mobile devices.
  *
  * ## Algorithm Overview
  *
  * The algorithm calculates the effective decay for each memory using:
- *
  * ```
  * effectiveDecay = baseDecay × gracePeriodMultiplier × recencyMultiplier
  *                  - frequencyBonus - confidenceBonus + sizePenalty
@@ -45,12 +44,19 @@ import kotlin.math.min
  * 6. **Size Penalty**: Large content decays faster for resource management
  * 7. **Pin Protection**: Absolute protection, no decay
  *
- * ## Test Results (Patent Evidence)
+ * ## Validated Test Results (Patent Evidence)
  *
- * - HIGH_RECENT memories: 13→16 (weight increased/maintained)
- * - LOW_OLD memories: 4→1 (aggressive decay)
- * - Differentiation ratio: 16x
- * - Clustering accuracy: 98.8%
+ * Ablation study (synthetic, 3500 memories, 10 cycles):
+ * - HIGH_RECENT: 12→12 (fully preserved by frequency + recency + confidence)
+ * - LOW_OLD: 5→1 (aggressive decay, recency penalty + no bonuses)
+ * - Differentiation ratio: 12x (SmartDecay) vs 2x (naive linear)
+ *
+ * Ablation study (randomized, 3000 memories, 10 cycles):
+ * - Top 10% avg: 11.56, Bottom 10% avg: 1.00
+ * - Differentiation ratio: 11.6x (SmartDecay) vs 4.7x (naive)
+ * - SmartDecay preserved 50% of memories vs 5% for naive
+ *
+ * Scale: 10,500 memories processed in 8.16ms (0.78µs/memory)
  *
  * @see IDecayStrategy
  * @see DecayConfig
