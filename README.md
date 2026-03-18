@@ -9,7 +9,7 @@ An offline-first Android application for personal memory management. Records fac
 then uses a multi-factor decay algorithm to automatically manage what stays relevant and what fades — entirely on-device, no cloud, no network.
 
 **Patent Pending:** US Provisional Application #63/942,399 — *"Offline Memory Lifecycle Management System and Method for Mobile AI Software"* (Filed Dec 2025)
-
+**[Demo Video](https://youtube.com/shorts/C30H1X8U_PE?si=_8SAzgQWdnWmPdaQ)**
 ---
 
 ## What It Does
