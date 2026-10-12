@@ -40,9 +40,9 @@ object Routes {
     const val HOME = "home"
     const val ADD = "add"
     const val ADD_EDIT = "add/{memoryId}"
-    const val SEARCH = "search"       // Batch 8b
-    const val REVIEW = "review"       // Batch 8b
-    const val SETTINGS = "settings"   // Batch 8b
+    const val SEARCH = "search"
+    const val REVIEW = "review"
+    const val SETTINGS = "settings"
 
     fun addEdit(memoryId: Long) = "add/$memoryId"
 }
@@ -70,7 +70,6 @@ fun M3moNavGraph() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
-    // Hide bottom bar on Add screen
     val showBottomBar = currentDestination?.route?.startsWith("add") != true
 
     Scaffold(
@@ -104,7 +103,6 @@ fun M3moNavGraph() {
             startDestination = Routes.HOME,
             modifier = Modifier.padding(innerPadding)
         ) {
-            // ===== Home =====
             composable(Routes.HOME) { backStackEntry ->
                 val vm: HomeViewModel = viewModel(
                     factory = viewModelFactory {
@@ -117,7 +115,6 @@ fun M3moNavGraph() {
                     }
                 )
 
-                // Refresh every time this screen becomes visible (including back navigation)
                 val lifecycleState = backStackEntry.lifecycle.currentState
                 LaunchedEffect(lifecycleState) {
                     if (lifecycleState == Lifecycle.State.RESUMED) {
@@ -133,7 +130,6 @@ fun M3moNavGraph() {
                 )
             }
 
-            // ===== Add (new) =====
             composable(Routes.ADD) {
                 val vm: AddMemoryViewModel = viewModel(
                     factory = viewModelFactory {
@@ -153,7 +149,6 @@ fun M3moNavGraph() {
                 )
             }
 
-            // ===== Add (edit existing) =====
             composable(
                 route = Routes.ADD_EDIT,
                 arguments = listOf(navArgument("memoryId") { type = NavType.LongType })
@@ -177,7 +172,6 @@ fun M3moNavGraph() {
                 )
             }
 
-            // ===== Batch 8b Placeholders =====
             composable(Routes.SEARCH) {
                 PlaceholderScreen(title = "Search", subtitle = "Coming in Batch 8b")
             }

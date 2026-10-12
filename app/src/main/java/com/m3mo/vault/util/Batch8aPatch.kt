@@ -22,8 +22,6 @@ import com.m3mo.vault.core.error.AppError
 fun <T, E> AppResult<T, E>.dataOrNull(): T? {
     return when (this) {
         is AppResult.Success -> {
-            // AppResult.Success stores data in .value property
-            // If your Success class uses a different property name, change here.
             try {
                 val field = this::class.java.declaredFields.firstOrNull {
                     it.name == "value" || it.name == "data"

@@ -35,15 +35,12 @@ class MemoryRepositoryImpl(
     private val logger: Logger
 ) : IMemoryRepository {
 
-    // ========== Single Item Operations ==========
 
     override suspend fun getById(id: Long): AppResult<MemoryItem, AppError> {
-        // Check cache first
         cache.get(id)?.let {
             return AppResult.success(it)
         }
 
-        // Cache miss - fetch from database
         return try {
             val entity = memoryDao.getById(id)
             if (entity == null) {
@@ -56,7 +53,7 @@ class MemoryRepositoryImpl(
                 AppResult.success(item)
             }
         } catch (e: CancellationException) {
-            throw e  // Must rethrow for proper coroutine cancellation
+            throw e
         } catch (e: Exception) {
             logger.e(LogTags.DATA, "Failed to get memory: $id", e)
             AppResult.failure(
@@ -92,7 +89,6 @@ class MemoryRepositoryImpl(
         return try {
             val entity = memory.toEntity()
             
-            // Use optimistic locking - check version
             val rowsUpdated = memoryDao.updateWithVersion(
                 id = entity.id,
                 content = entity.content,
@@ -199,7 +195,6 @@ class MemoryRepositoryImpl(
         }
     }
 
-    // ========== Batch Operations ==========
 
     override suspend fun insertBatch(memories: List<MemoryItem>): AppResult<List<MemoryItem>, AppError> {
         if (memories.isEmpty()) return AppResult.success(emptyList())
@@ -273,7 +268,6 @@ class MemoryRepositoryImpl(
         }
     }
 
-    // ========== Query Operations ==========
 
     override suspend fun getAll(limit: Int, offset: Int): AppResult<List<MemoryItem>, AppError> {
         return try {
@@ -481,7 +475,6 @@ class MemoryRepositoryImpl(
         }
     }
 
-    // ========== Reactive Streams ==========
 
     override fun observeAll(): Flow<List<MemoryItem>> {
         return memoryDao.observeAll().map { entities ->
@@ -517,7 +510,6 @@ class MemoryRepositoryImpl(
         return memoryDao.observeAll().map { it.size }
     }
 
-    // ========== Statistics ==========
 
     override suspend fun count(): AppResult<Int, AppError> {
         return try {
@@ -588,7 +580,6 @@ class MemoryRepositoryImpl(
         }
     }
 
-    // ========== Search Support ==========
 
     override suspend fun getSearchable(): AppResult<List<MemoryItem>, AppError> {
         return try {
@@ -612,13 +603,11 @@ class MemoryRepositoryImpl(
     }
 
     override suspend fun searchByKeyword(query: String, limit: Int): AppResult<List<MemoryItem>, AppError> {
-        // Deprecated: Use searchFts() for better performance
         return searchFts(query, limit)
     }
 
     override suspend fun searchFts(query: String, limit: Int): AppResult<List<MemoryItem>, AppError> {
         return try {
-            // Sanitize query for FTS (escape special characters)
             val sanitizedQuery = sanitizeFtsQuery(query)
             if (sanitizedQuery.isBlank()) {
                 return AppResult.success(emptyList())
@@ -630,7 +619,6 @@ class MemoryRepositoryImpl(
             throw e
         } catch (e: Exception) {
             logger.e(LogTags.DATA, "FTS search failed for '$query'", e)
-            // Fallback to basic search on FTS error
             fallbackSearch(query, limit)
         }
     }
@@ -670,7 +658,7 @@ class MemoryRepositoryImpl(
             throw e
         } catch (e: Exception) {
             logger.w(LogTags.DATA, "FTS count failed", e)
-            AppResult.success(0) // Return 0 on error to trigger fuzzy search
+            AppResult.success(0)
         }
     }
 
@@ -683,9 +671,7 @@ class MemoryRepositoryImpl(
         return query
             .lowercase()
             .trim()
-            // Remove FTS special characters: " * - OR AND NEAR
             .replace(Regex("[\"*\\-()]"), " ")
-            // Collapse multiple spaces
             .replace(Regex("\\s+"), " ")
             .trim()
     }
@@ -700,7 +686,6 @@ class MemoryRepositoryImpl(
                 ProcessingState.STORED.name,
                 ProcessingState.OPTIMIZED.name
             )
-            // Limit fallback to recent memories only
             val entities = memoryDao.getSearchCandidates(searchableStates, 500)
             val results = entities.toDomainList()
                 .filter { it.normalizedContent.contains(normalizedQuery) }
@@ -718,7 +703,6 @@ class MemoryRepositoryImpl(
         }
     }
 
-    // ========== Maintenance ==========
 
     override suspend fun cleanupTombstoned(cutoffTime: Long): AppResult<Int, AppError> {
         return try {
@@ -740,8 +724,6 @@ class MemoryRepositoryImpl(
 
     override suspend fun vacuum(): AppResult<Unit, AppError> {
         return try {
-            // Room doesn't expose VACUUM directly
-            // This would need to be done via RoomDatabase.query("VACUUM")
             logger.i(LogTags.DATA, "Vacuum requested (not implemented)")
             AppResult.success(Unit)
         } catch (e: CancellationException) {
@@ -759,7 +741,6 @@ class MemoryRepositoryImpl(
 
     override suspend fun getDatabaseSize(): AppResult<Long, AppError> {
         return try {
-            // Would need access to database file to get actual size
             AppResult.success(0L)
         } catch (e: CancellationException) {
             throw e
@@ -774,7 +755,6 @@ class MemoryRepositoryImpl(
         }
     }
 
-    // ========== Cache Management (Not in interface) ==========
 
     /**
      * Clear cache (for testing or memory pressure)

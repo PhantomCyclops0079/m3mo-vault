@@ -81,7 +81,7 @@ class Stage1Executor(
                 inputCount = inputMemories.size,
                 outputCount = processedMemories.size,
                 durationMs = duration,
-                success = true,  // Partial success
+                success = true,
                 errors = errors
             )
         }
@@ -91,17 +91,14 @@ class Stage1Executor(
      * Process a single memory
      */
     private fun processMemory(memory: MemoryItem): MemoryItem {
-        // Normalize content
         val normalizedContent = normalizer.normalize(memory.content)
 
-        // Auto-classify if type is not set or is default FACT
         val classifiedType = if (memory.type == MemoryType.FACT) {
             classifyMemory(memory.content)
         } else {
             memory.type
         }
 
-        // Extract keywords for tags if empty
         val tags = if (memory.tags.isEmpty()) {
             normalizer.extractKeywords(memory.content, maxKeywords = 5)
         } else {
@@ -126,17 +123,14 @@ class Stage1Executor(
     private fun classifyMemory(content: String): MemoryType {
         val lowerContent = content.lowercase()
 
-        // Check for TASK patterns
         if (isTaskContent(lowerContent)) {
             return MemoryType.TASK
         }
 
-        // Check for EPISODE patterns
         if (isEpisodeContent(lowerContent)) {
             return MemoryType.EPISODE
         }
 
-        // Default to FACT
         return MemoryType.FACT
     }
 
@@ -147,7 +141,7 @@ class Stage1Executor(
             "reminder", "don't forget", "remember to",
             "buy", "call", "email", "send", "meet",
             "deadline", "due", "by tomorrow", "by monday",
-            "[ ]", "[x]", "- [ ]"  // Checkbox patterns
+            "[ ]", "[x]", "- [ ]"
         )
 
         return taskPatterns.any { content.contains(it) }

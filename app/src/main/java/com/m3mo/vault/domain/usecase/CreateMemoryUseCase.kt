@@ -42,13 +42,11 @@ class CreateMemoryUseCase(
         source: MemorySource = MemorySource.TEXT,
         tags: List<String> = emptyList()
     ): AppResult<MemoryItem, AppError> {
-        // Validate input
         val validationError = validateInput(content)
         if (validationError != null) {
             return AppResult.failure(validationError)
         }
 
-        // Create domain object
         val memory = MemoryItem.create(
             id = idGenerator.nextId(),
             content = content.trim(),
@@ -57,10 +55,8 @@ class CreateMemoryUseCase(
             timestamp = clock.nowMillis()
         ).withTags(tags)
 
-        // Persist
         return repository.insert(memory)
             .suspendOnSuccess { created ->
-                // Publish event
                 eventBus.publish(MemoryCreatedEvent(created))
             }
     }

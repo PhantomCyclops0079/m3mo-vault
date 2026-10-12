@@ -48,7 +48,6 @@ class MemoryBooster(
         return when (val memoryResult = repository.getById(memoryId)) {
             is AppResult.Success -> {
                 val memory = memoryResult.value
-                // Record access using an immutable update.
                 val updated = memory.copy(
                     lastAccessedAt = clock.nowMillis(),
                     accessCount = memory.accessCount + 1,
@@ -71,7 +70,6 @@ class MemoryBooster(
             is AppResult.Success -> {
                 val memory = memoryResult.value
 
-                // Apply the boost and increment the optimistic-lock version.
                 val boosted = when (action) {
                     BoostAction.PIN -> {
                         memory.copy(

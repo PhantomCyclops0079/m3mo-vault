@@ -34,7 +34,6 @@ class AddMemoryViewModel(
         private const val TAG = "AddMemoryVM"
     }
 
-    // ========== UI State ==========
 
     private val _content = MutableStateFlow("")
     val content: StateFlow<String> = _content.asStateFlow()
@@ -51,10 +50,8 @@ class AddMemoryViewModel(
     private val _isEditMode = MutableStateFlow(false)
     val isEditMode: StateFlow<Boolean> = _isEditMode.asStateFlow()
 
-    // Internal: existing memory being edited
     private var editingMemory: MemoryItem? = null
 
-    // ========== Public Actions ==========
 
     fun loadForEdit(memoryId: Long) {
         viewModelScope.launch {
@@ -109,10 +106,8 @@ class AddMemoryViewModel(
         _saveResult.value = null
     }
 
-    // ========== Internal ==========
 
     private suspend fun saveNew(text: String) {
-        // CreateMemoryUseCase.execute(content, type, source, tags)
         val result = createMemoryUseCase.execute(
             content = text,
             type = _selectedType.value
@@ -129,8 +124,6 @@ class AddMemoryViewModel(
     private suspend fun saveEdit(text: String) {
         val existing = editingMemory ?: return
 
-        // FIX: UpdateMemoryUseCase has no execute(MemoryItem) method.
-        // Use updateContent(id, newContent) which is the actual API.
         val result = updateMemoryUseCase.updateContent(
             id = existing.id,
             newContent = text

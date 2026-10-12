@@ -91,7 +91,6 @@ data class RetryPolicy(
         val baseDelay = initialDelayMs * backoffMultiplier.pow(attempt.toDouble())
         val cappedDelay = min(baseDelay, maxDelayMs.toDouble())
 
-        // Add jitter to prevent thundering herd
         val jitter = cappedDelay * jitterFactor * (Random.nextDouble() * 2 - 1)
         return (cappedDelay + jitter).toLong().coerceAtLeast(1)
     }
@@ -121,12 +120,10 @@ suspend fun <T> RetryPolicy.execute(
         } catch (e: Throwable) {
             lastError = e
 
-            // Check if we should retry this error
             if (!retryOn(e)) {
                 return RetryResult.NonRetryable(e, attempt + 1)
             }
 
-            // Don't delay after the last attempt
             if (attempt < maxAttempts - 1) {
                 delay(calculateDelay(attempt))
             }
@@ -247,7 +244,6 @@ fun retryPolicy(block: RetryPolicyBuilder.() -> Unit): RetryPolicy {
     return RetryPolicyBuilder().apply(block).build()
 }
 
-// ========== Extension for AppResult ==========
 
 /**
  * Retry an operation that returns AppResult
@@ -266,7 +262,6 @@ suspend fun <T, E> RetryPolicy.retryAppResult(
 
         lastResult = result
 
-        // Don't delay after the last attempt
         if (attempt < maxAttempts - 1) {
             delay(calculateDelay(attempt))
         }

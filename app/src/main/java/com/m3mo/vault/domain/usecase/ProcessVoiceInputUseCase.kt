@@ -42,11 +42,9 @@ class ProcessVoiceInputUseCase(
      * Stop capture and process to memories
      */
     suspend fun stopAndProcess(sessionId: String): AppResult<List<MemoryItem>, AppError> {
-        // Stop capture and get transcription
         val transcriptionResult = voiceProcessor.stopCapture(sessionId)
 
         return transcriptionResult.suspendFlatMap { transcription ->
-            // Publish transcription event
             eventBus.publish(
                 VoiceInputCompletedEvent(
                     sessionId = sessionId,
@@ -56,9 +54,7 @@ class ProcessVoiceInputUseCase(
                 )
             )
 
-            // Process session to get classified segments
             voiceProcessor.processSession(sessionId).suspendFlatMap { segments ->
-                // Publish segments event
                 eventBus.publish(
                     SegmentsExtractedEvent(
                         sessionId = sessionId,
@@ -72,7 +68,6 @@ class ProcessVoiceInputUseCase(
                     )
                 )
 
-                // Create memories from segments
                 createMemoriesFromSegments(segments)
             }
         }

@@ -34,7 +34,6 @@ class RunDecayUseCase(
      * Run decay optimization with automatic batch sizing
      */
     suspend fun execute(): AppResult<DecayBatchResult, AppError> {
-        // Get recommended batch size based on resources
         val batchSize = resourceGovernor.recommendedBatchSize(OperationType.DECAY_BATCH)
 
         return executeBatch(batchSize)
@@ -44,7 +43,6 @@ class RunDecayUseCase(
      * Run decay with explicit batch size
      */
     suspend fun executeBatch(batchSize: Int): AppResult<DecayBatchResult, AppError> {
-        // Request resource budget
         val budget = resourceGovernor.requestBudget(OperationType.DECAY_BATCH)
             ?: return AppResult.failure(
                 AppError.Resource.ThermalThrottling(
@@ -55,10 +53,8 @@ class RunDecayUseCase(
         try {
             val startTime = clock.nowMillis()
 
-            // Publish start event
             eventBus.publish(DecayRunStartedEvent(batchSize = batchSize))
 
-            // Get eligible memories
             val memoriesResult = repository.getDecayEligible(limit = batchSize)
 
             return memoriesResult.suspendFlatMap { memories ->
@@ -66,10 +62,8 @@ class RunDecayUseCase(
                     return@suspendFlatMap AppResult.success(DecayBatchResult.empty())
                 }
 
-                // Apply decay algorithm
                 val decayResults = decayStrategy.applyBatch(memories, clock.nowMillis())
 
-                // Process results
                 val updatedMemories = mutableListOf<com.m3mo.vault.domain.model.MemoryItem>()
                 val archivedIds = mutableListOf<Long>()
                 val tombstonedIds = mutableListOf<Long>()
@@ -110,12 +104,10 @@ class RunDecayUseCase(
                     }
                 }
 
-                // Batch update
                 if (updatedMemories.isNotEmpty()) {
                     repository.updateBatch(updatedMemories)
                 }
 
-                // Batch tombstone
                 if (tombstonedIds.isNotEmpty()) {
                     repository.deleteBatch(tombstonedIds)
                 }
@@ -132,7 +124,6 @@ class RunDecayUseCase(
                     processedAt = clock.nowMillis()
                 )
 
-                // Publish completion event
                 eventBus.publish(DecayRunCompletedEvent(result = finalResult))
 
                 AppResult.success(finalResult)

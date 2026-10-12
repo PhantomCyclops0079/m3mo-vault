@@ -29,20 +29,13 @@ class Stage3Executor(
         val startTime = System.currentTimeMillis()
         val errors = mutableListOf<PipelineError>()
 
-        // 🔥 FIX BUG 2: Stale Data in Decay
-        // We must use the LATEST version of the memories.
-        // Some memories might have been updated in Stage 1 (normalized/classified)
-        // or Stage 2 (vectorized).
 
-        // 1. Start with all input memories
         val latestMemoriesMap = context.inputMemories.associateBy { it.id }.toMutableMap()
 
-        // 2. Overwrite with any processed (updated) memories from previous stages
         context.processedMemories.forEach { memory ->
             latestMemoriesMap[memory.id] = memory
         }
 
-        // 3. Filter for eligibility using the LATEST state
         val inputMemories = latestMemoriesMap.values.filter {
             decayStrategy.isEligible(it)
         }
@@ -59,16 +52,13 @@ class Stage3Executor(
 
         logger.d(LogTags.PIPELINE, "Stage 3: Processing ${inputMemories.size} memories for decay")
 
-        // Apply decay in batch
         val currentTime = System.currentTimeMillis()
         val batchResult = decayStrategy.applyBatch(inputMemories, currentTime)
 
-        // Process results
         val updatedMemories = mutableListOf<MemoryItem>()
         val archiveCandidates = mutableListOf<Long>()
         val tombstoneCandidates = mutableListOf<Long>()
 
-        // We use the latest map to look up originals for modification
         val memoryMap = inputMemories.associateBy { it.id }
 
         for (result in batchResult.results) {
@@ -100,14 +90,12 @@ class Stage3Executor(
                     tombstoneCandidates.add(result.memoryId)
                 }
                 DecayAction.NONE, DecayAction.BOOST -> {
-                    // No change needed
                 }
             }
 
             context.budget.recordItem()
         }
 
-        // Add results to context (these are the final versions)
         context.addProcessedMemories(updatedMemories)
 
         val duration = System.currentTimeMillis() - startTime

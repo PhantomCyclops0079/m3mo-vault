@@ -35,7 +35,6 @@ class CompositeErrorMapper(
         for (mapper in mappers) {
             mapper.map(throwable)?.let { return it }
         }
-        // Fallback to unknown error
         return AppError.Unknown(
             technicalMessage = throwable.message ?: throwable::class.simpleName ?: "Unknown error",
             cause = throwable
@@ -74,7 +73,7 @@ class DatabaseErrorMapper : ErrorMapper {
             )
 
             is SQLiteFullException -> AppError.IO.InsufficientStorage(
-                requiredBytes = 0, // Unknown
+                requiredBytes = 0,
                 availableBytes = 0,
                 technicalMessage = throwable.message ?: "Database full"
             )
@@ -119,8 +118,6 @@ class DatabaseErrorMapper : ErrorMapper {
     }
 
     private fun extractTableName(message: String): String? {
-        // Try to extract table name from constraint message
-        // e.g., "UNIQUE constraint failed: memory_facts.content"
         val regex = Regex("(\\w+)\\.(\\w+)")
         return regex.find(message)?.groupValues?.getOrNull(1)
     }
@@ -172,7 +169,6 @@ class IoErrorMapper : ErrorMapper {
 
     private fun extractPath(message: String?): String? {
         if (message == null) return null
-        // Try common path patterns
         val patterns = listOf(
             Regex("""'([^']+)'"""),
             Regex(""""([^"]+)""""),
@@ -247,7 +243,6 @@ class SystemErrorMapper : ErrorMapper {
     }
 }
 
-// ========== Extensions ==========
 
 /**
  * Map any throwable to AppError

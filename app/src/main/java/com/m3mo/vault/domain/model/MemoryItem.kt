@@ -195,7 +195,6 @@ data class MemoryItem(
         return (diffMs / (24 * 60 * 60 * 1000)).toInt()
     }
 
-    // ========== Mutation helpers (return new instances) ==========
 
     fun withWeight(newWeight: Int): MemoryItem {
         return copy(
@@ -323,9 +322,9 @@ data class MemoryItem(
  * Source of memory input
  */
 enum class MemorySource {
-    TEXT,       // Manual text entry
-    VOICE,      // Voice transcription
-    IMPORT,     // Imported from external source
-    MERGED,     // Result of merging similar memories
-    SYSTEM      // System-generated
+    TEXT,
+    VOICE,
+    IMPORT,
+    MERGED,
+    SYSTEM
 }

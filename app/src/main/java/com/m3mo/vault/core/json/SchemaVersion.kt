@@ -129,15 +129,13 @@ class MigrationChain<T>(
         toVersion: SchemaVersion
     ): AppResult<T, MigrationError> {
         if (fromVersion >= toVersion) {
-            return AppResult.success(data) // No migration needed
+            return AppResult.success(data)
         }
 
-        // Find applicable migrations
         val applicableMigrations = migrations
             .filter { it.fromVersion >= fromVersion && it.toVersion <= toVersion }
             .sortedBy { it.fromVersion }
 
-        // Apply migrations in sequence
         var currentData = data
         var currentVersion = fromVersion
 
@@ -232,7 +230,6 @@ fun JSONObject.extractVersion(default: SchemaVersion): SchemaVersion {
     return SchemaVersion.parseOrDefault(versionStr, default)
 }
 
-// ========== Example Migrations ==========
 
 /**
  * Example: Migrate MemoryFact from v1 to v2
@@ -244,7 +241,6 @@ class MemoryFactMigrationV1ToV2 : SchemaMigration<JSONObject> {
 
     override fun migrate(data: JSONObject): AppResult<JSONObject, MigrationError> {
         return try {
-            // Add new fields with defaults
             if (!data.has("processingState")) {
                 data.put("processingState", "STORED")
             }
@@ -255,7 +251,6 @@ class MemoryFactMigrationV1ToV2 : SchemaMigration<JSONObject> {
                 data.put("version", 1)
             }
 
-            // Update schema version
             data.put("_schemaVersion", toVersion.toString())
 
             AppResult.success(data)

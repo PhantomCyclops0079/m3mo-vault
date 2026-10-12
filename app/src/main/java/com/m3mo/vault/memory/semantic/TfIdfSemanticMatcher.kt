@@ -22,11 +22,8 @@ class TfIdfSemanticMatcher(
     private val logger: Logger
 ) : ISemanticMatcher {
 
-    // Embedding cache: content-based key → embedding (ByteArray)
-    // Key strategy: short texts use raw content, long texts use "H:" + hashCode
     private val embeddingCache = ConcurrentHashMap<String, ByteArray>()
 
-    // Statistics
     private val searchCount = AtomicLong(0)
     private val embedCount = AtomicLong(0)
     private var totalSearchTimeMs = AtomicLong(0)
@@ -47,10 +44,8 @@ class TfIdfSemanticMatcher(
             )
         }
 
-        // Ensure vectorizer is fitted
         ensureFitted(candidates)
 
-        // Transform query
         val queryVector = vectorizer.transform(query.text)
         if (queryVector.isEmpty()) {
             return SearchResults(
@@ -61,7 +56,6 @@ class TfIdfSemanticMatcher(
             )
         }
 
-        // Calculate similarities
         val results = candidates.mapNotNull { memory ->
             val memoryVector = getOrComputeVector(memory)
             if (memoryVector.isEmpty()) return@mapNotNull null
@@ -112,7 +106,7 @@ class TfIdfSemanticMatcher(
         if (referenceVector.isEmpty()) return emptyList()
 
         return candidates
-            .filter { it.id != memory.id }  // Exclude self
+            .filter { it.id != memory.id }
             .mapNotNull { candidate ->
                 val candidateVector = getOrComputeVector(candidate)
                 if (candidateVector.isEmpty()) return@mapNotNull null
@@ -133,10 +127,6 @@ class TfIdfSemanticMatcher(
         val startTime = System.currentTimeMillis()
         embedCount.incrementAndGet()
 
-        // Cache key strategy to minimize collision risk:
-        // - Short texts (<= 64 chars): use text itself as key (no collision possible)
-        // - Long texts: use hashCode (extremely low collision probability ~1/2^32)
-        // Trade-off: slightly more memory for short texts, but zero collision risk
         val cacheKey = computeCacheKey(content)
         embeddingCache[cacheKey]?.let {
             cacheHits.incrementAndGet()
@@ -144,12 +134,9 @@ class TfIdfSemanticMatcher(
         }
         cacheMisses.incrementAndGet()
 
-        // Compute embedding
         val vector = vectorizer.transform(content)
-        // Direct ByteArray - no Base64 overhead (33% size reduction vs Base64 String)
         val bytes = EmbeddingSerializer.serializeToBytes(vector)
 
-        // Cache if enabled
         if (config.enableCache && embeddingCache.size < config.maxCacheSize) {
             embeddingCache[cacheKey] = bytes
         }
@@ -171,9 +158,9 @@ class TfIdfSemanticMatcher(
      */
     private fun computeCacheKey(content: String): String {
         return if (content.length <= SHORT_TEXT_THRESHOLD) {
-            content  // No collision possible for short texts
+            content
         } else {
-            "H:${content.hashCode()}"  // Prefix to distinguish from raw text
+            "H:${content.hashCode()}"
         }
     }
 
@@ -228,7 +215,6 @@ class TfIdfSemanticMatcher(
      */
     val cacheSize: Int get() = embeddingCache.size
 
-    // ========== Internal Methods ==========
 
     private fun ensureFitted(memories: List<MemoryItem>) {
         if (vectorizer.vocabSize == 0) {
@@ -239,18 +225,14 @@ class TfIdfSemanticMatcher(
     private fun getOrComputeVector(memory: MemoryItem): Map<Int, Float> {
         val content = memory.normalizedContent.ifBlank { memory.content }
 
-        // Try to use cached embedding (now ByteArray)
         memory.embedding?.let { cached ->
             return EmbeddingSerializer.deserializeFromBytes(cached)
         }
 
-        // Compute fresh
         return vectorizer.transform(content)
     }
 
     companion object {
-        // Texts shorter than this use full content as cache key (zero collision)
-        // Texts longer use hashCode (very low collision probability)
         private const val SHORT_TEXT_THRESHOLD = 64
     }
 }

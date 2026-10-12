@@ -86,8 +86,6 @@ class OptimizationPipeline(
             context.start()
             budget.start()
 
-            // Stage 1: Normalization
-            // Processes NEW/QUEUED memories
             coroutineContext.ensureActive()
             val stage1Result = stage1.execute(context)
             context.completeStage(PipelineStage.STAGE_1_NORMALIZE, stage1Result)
@@ -96,8 +94,6 @@ class OptimizationPipeline(
                 return finishEarly(context, "Stage 1")
             }
 
-            // Stage 2: Vectorization (adaptive)
-            // Processes STORED memories without embeddings
             coroutineContext.ensureActive()
             val stage2Result = stage2.execute(context)
             context.completeStage(PipelineStage.STAGE_2_VECTORIZE, stage2Result)
@@ -106,17 +102,13 @@ class OptimizationPipeline(
                 return finishEarly(context, "Stage 2")
             }
 
-            // Stage 3: Decay
-            // Processes eligible memories (STORED/OPTIMIZED) for weight adjustment
             coroutineContext.ensureActive()
             val stage3Result = stage3.execute(context)
             context.completeStage(PipelineStage.STAGE_3_DECAY, stage3Result)
 
-            // Persist results
             coroutineContext.ensureActive()
             persistResults(context)
 
-            // Finalize
             context.completeStage(PipelineStage.FINALIZATION, StageResult.success(
                 stage = PipelineStage.FINALIZATION,
                 inputCount = context.processedMemories.size,
@@ -149,18 +141,13 @@ class OptimizationPipeline(
      * Suitable for background/periodic execution
      */
     suspend fun runIncremental(): AppResult<PipelineResult, AppError> {
-        // 🔥 IMPROVEMENT: Fetch both NEW memories and DECAY eligible memories
-        // We assume 50% split for the batch to handle both ingestion and decay
 
-        // 1. Fetch NEW memories (Need Stage 1)
         val newMemoriesResult = repository.getByStates(setOf(ProcessingState.NEW, ProcessingState.QUEUED), 50)
         val newMemories = (newMemoriesResult as? AppResult.Success)?.value ?: emptyList()
 
-        // 2. Fetch Decay Eligible (Need Stage 3, and maybe Stage 2)
         val decayEligibleResult = repository.getDecayEligible(50)
         val decayEligible = (decayEligibleResult as? AppResult.Success)?.value ?: emptyList()
 
-        // 3. Merge and deduplicate
         val allMemories = (newMemories + decayEligible).distinctBy { it.id }
 
         if (allMemories.isEmpty()) {
@@ -188,8 +175,6 @@ class OptimizationPipeline(
      * Suitable for when device is charging
      */
     suspend fun runFull(): AppResult<PipelineResult, AppError> {
-        // For full run, we just get a larger batch of decay eligible
-        // plus any new ones
 
         val newMemoriesResult = repository.getByStates(setOf(ProcessingState.NEW, ProcessingState.QUEUED), 200)
         val newMemories = (newMemoriesResult as? AppResult.Success)?.value ?: emptyList()

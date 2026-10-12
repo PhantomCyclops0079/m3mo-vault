@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MemoryDao {
 
-    // ========== Insert Operations ==========
 
     /**
      * Insert a single memory
@@ -38,7 +37,6 @@ interface MemoryDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertAll(memories: List<MemoryEntity>): List<Long>
 
-    // ========== Update Operations (with Optimistic Locking) ==========
 
     /**
      * Update a memory with optimistic locking
@@ -148,7 +146,6 @@ interface MemoryDao {
         updatedAt: Long
     ): Int
 
-    // ========== Delete Operations ==========
 
     /**
      * Soft delete - mark as TOMBSTONED
@@ -192,7 +189,6 @@ interface MemoryDao {
     @Query("DELETE FROM memories WHERE state = 'TOMBSTONED' AND updatedAt < :threshold")
     suspend fun deleteTombstonedOlderThan(threshold: Long): Int
 
-    // ========== Query Operations ==========
 
     /**
      * Get memory by ID
@@ -324,7 +320,6 @@ interface MemoryDao {
     """)
     fun observeIncompleteTasks(): Flow<List<MemoryEntity>>
 
-    // ========== Aggregation Queries ==========
 
     /**
      * Count memories by state
@@ -361,7 +356,6 @@ interface MemoryDao {
     @Query("SELECT SUM(accessCount) FROM memories WHERE state != 'TOMBSTONED'")
     suspend fun getTotalAccessCount(): Long?
 
-    // ========== Maintenance Queries ==========
 
     /**
      * Check if memory exists
@@ -405,7 +399,6 @@ interface MemoryDao {
     """)
     suspend fun getAccessedBetween(startTime: Long, endTime: Long): List<MemoryEntity>
 
-    // ========== FTS (Full-Text Search) Operations ==========
 
     /**
      * Search using FTS4 full-text index

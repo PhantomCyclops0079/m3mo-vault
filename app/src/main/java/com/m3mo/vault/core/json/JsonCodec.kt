@@ -72,7 +72,6 @@ class DefaultJsonCodec(
     private val adapters = mutableMapOf<Class<*>, JsonAdapter<*>>()
 
     init {
-        // Register built-in adapters
         registerBuiltInAdapters()
     }
 
@@ -106,12 +105,10 @@ class DefaultJsonCodec(
                 AppResult.success(adapter.toJson(value))
             } else {
                 if (strictMode) {
-                    // Strict mode: Require explicit adapter registration
                     val error = JsonError.MissingAdapter(value::class.java.name)
                     logger.e("JsonCodec", "Missing adapter for ${value::class.java.simpleName} in strict mode")
                     AppResult.failure(error)
                 } else {
-                    // Debug mode: Warn and fallback to reflection
                     logger.w("JsonCodec", "Using SLOW reflection for ${value::class.java.simpleName}. " +
                             "Register an adapter for better performance.")
                     AppResult.success(reflectToJson(value))
@@ -165,7 +162,6 @@ class DefaultJsonCodec(
     }
 
     private fun registerBuiltInAdapters() {
-        // Map adapter
         registerAdapter(Map::class.java, MapJsonAdapter())
     }
 
@@ -226,16 +222,10 @@ object JsonCodecRegistry {
      * Add your domain-specific adapters here
      */
     fun registerCoreAdapters(codec: DefaultJsonCodec) {
-        // Example: Register high-frequency objects
-        // codec.registerAdapter(MemoryFact::class.java, MemoryFactJsonAdapter())
-        // codec.registerAdapter(MemoryEpisode::class.java, MemoryEpisodeJsonAdapter())
-        // codec.registerAdapter(OptimizationMetrics::class.java, MetricsJsonAdapter())
 
-        // TODO: Add adapters here as you implement domain objects
     }
 }
 
-// ========== Extension Functions ==========
 
 /**
  * Safe get with default

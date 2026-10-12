@@ -49,23 +49,18 @@ class InProcessEventBus(
     private val logger: Logger = NoOpLogger
 ) : EventBus {
 
-    // Internal shared flow for all events
     private val eventFlow = MutableSharedFlow<EventEnvelope<Any>>(
         replay = replayCount,
         extraBufferCapacity = bufferCapacity,
         onBufferOverflow = onBufferOverflow
     )
 
-    // Track subscriber counts per event type
     private val subscriberCounts = ConcurrentHashMap<KClass<*>, AtomicInteger>()
 
-    // Internal scope for any background processing
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    // Closed flag
     private val isClosed = AtomicBoolean(false)
 
-    // Metrics
     private val totalPublished = AtomicInteger(0)
     private val totalDropped = AtomicInteger(0)
     private val criticalEventsForced = AtomicInteger(0)
@@ -84,31 +79,27 @@ class InProcessEventBus(
 
         logger.d(LogTags.EVENT, "Publishing: ${envelope.toLogString()}")
 
-        // Try non-blocking emit first
         val emitted = eventFlow.tryEmit(envelope as EventEnvelope<Any>)
 
         if (emitted) {
             totalPublished.incrementAndGet()
         } else {
-            // Buffer full - handle based on event criticality
             totalDropped.incrementAndGet()
 
             if (isCriticalEvent(event)) {
-                // Critical events: Force delivery via suspending emit
                 logger.w(
                     LogTags.EVENT,
                     "Critical event buffer full, using suspend emit: ${envelope.eventType}"
                 )
                 try {
-                    eventFlow.emit(envelope) // Will suspend until space available
+                    eventFlow.emit(envelope)
                     totalPublished.incrementAndGet()
-                    totalDropped.decrementAndGet() // Correct the count
+                    totalDropped.decrementAndGet()
                     criticalEventsForced.incrementAndGet()
                 } catch (e: Exception) {
                     logger.e(LogTags.EVENT, "Failed to emit critical event: ${envelope.eventType}", e)
                 }
             } else {
-                // Non-critical events: Already handled by DROP_OLDEST
                 logger.w(
                     LogTags.EVENT,
                     "Non-critical event dropped (buffer full): ${envelope.eventType}"
@@ -122,20 +113,14 @@ class InProcessEventBus(
      * Override this in subclasses or configure via constructor parameter
      */
     protected open fun isCriticalEvent(event: Any): Boolean {
-        // Default: Check for marker interface or specific types
         return when (event) {
             is CriticalEvent -> true
-            // Add your critical event types here:
-            // is MemoryCreatedEvent,
-            // is MemoryDeletedEvent,
-            // is OptimizationCompletedEvent -> true
             else -> false
         }
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun <T : Any> subscribe(eventType: KClass<T>): Flow<EventEnvelope<T>> {
-        // Increment subscriber count
         subscriberCounts.computeIfAbsent(eventType) { AtomicInteger(0) }.incrementAndGet()
 
         logger.d(LogTags.EVENT, "New subscriber for ${eventType.simpleName}")
@@ -227,7 +212,7 @@ class InProcessEventBus(
             return InProcessEventBus(
                 bufferCapacity = 1024,
                 replayCount = 0,
-                onBufferOverflow = BufferOverflow.SUSPEND, // Never drop critical events
+                onBufferOverflow = BufferOverflow.SUSPEND,
                 logger = logger
             )
         }

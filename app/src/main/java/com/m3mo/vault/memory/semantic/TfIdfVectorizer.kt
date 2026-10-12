@@ -36,19 +36,14 @@ class TfIdfVectorizer(
     private val config: TfIdfConfig = TfIdfConfig.default(),
     private val normalizer: DefaultNormalizer = DefaultNormalizer(NormalizerConfig.forIndexing())
 ) {
-    // Vocabulary: word → index
     private val vocabulary = mutableMapOf<String, Int>()
 
-    // Inverse document frequency for each term
     private val idfScores = mutableMapOf<String, Float>()
 
-    // Document frequency: how many documents contain each term
     private val documentFrequency = mutableMapOf<String, Int>()
 
-    // Total documents seen during fit
     private var documentCount = 0
 
-    // Whether the model has been fitted
     private var isFitted = false
 
     /**
@@ -61,11 +56,9 @@ class TfIdfVectorizer(
         idfScores.clear()
         documentFrequency.clear()
 
-        // Tokenize all documents
         val tokenizedDocs = documents.map { normalizer.normalizeAndTokenize(it) }
         documentCount = tokenizedDocs.size
 
-        // Build vocabulary and document frequency
         var vocabIndex = 0
         for (tokens in tokenizedDocs) {
             val uniqueTokens = tokens.toSet()
@@ -77,12 +70,10 @@ class TfIdfVectorizer(
             }
         }
 
-        // Apply vocabulary limit
         if (vocabulary.size > config.maxVocabSize) {
             pruneVocabulary()
         }
 
-        // Calculate IDF scores
         calculateIdfScores()
 
         isFitted = true
@@ -125,13 +116,11 @@ class TfIdfVectorizer(
         val tokens = normalizer.normalizeAndTokenize(document)
         if (tokens.isEmpty()) return emptyMap()
 
-        // Calculate term frequency
         val termFreq = mutableMapOf<String, Int>()
         for (token in tokens) {
             termFreq[token] = termFreq.getOrDefault(token, 0) + 1
         }
 
-        // Calculate TF-IDF
         val vector = mutableMapOf<Int, Float>()
         val totalTerms = tokens.size.toFloat()
 
@@ -142,7 +131,6 @@ class TfIdfVectorizer(
             vector[index] = tf * idf
         }
 
-        // L2 normalize
         if (config.normalize) {
             return l2Normalize(vector)
         }
@@ -182,7 +170,6 @@ class TfIdfVectorizer(
         var norm1 = 0f
         var norm2 = 0f
 
-        // Use smaller set for iteration
         val (smaller, larger) = if (vec1.size < vec2.size) vec1 to vec2 else vec2 to vec1
 
         for ((index, value1) in smaller) {
@@ -197,7 +184,6 @@ class TfIdfVectorizer(
             norm2 += value * value
         }
 
-        // Also add remaining norm1 contributions
         for ((index, value1) in vec1) {
             if (index !in vec2) {
                 norm1 += value1 * value1
@@ -292,31 +278,26 @@ class TfIdfVectorizer(
      */
     fun getIdf(term: String): Float? = idfScores[term]
 
-    // ========== Internal Methods ==========
 
     private fun calculateIdfScores() {
         idfScores.clear()
         val n = documentCount.toFloat()
 
         for ((term, df) in documentFrequency) {
-            // IDF: natural log of the document-count ratio, plus 1.
             idfScores[term] = ln(n / df) + 1f
         }
     }
 
     private fun pruneVocabulary() {
-        // Keep terms with highest document frequency
         val sortedTerms = documentFrequency.entries
             .sortedByDescending { it.value }
             .take(config.maxVocabSize)
             .map { it.key }
             .toSet()
 
-        // Remove infrequent terms
         vocabulary.keys.removeAll { it !in sortedTerms }
         documentFrequency.keys.removeAll { it !in sortedTerms }
 
-        // Re-index vocabulary
         var index = 0
         for (term in vocabulary.keys.toList()) {
             vocabulary[term] = index++

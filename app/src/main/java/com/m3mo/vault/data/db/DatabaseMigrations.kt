@@ -22,9 +22,6 @@ object DatabaseMigrations {
      * Add new migrations to this array
      */
     val ALL_MIGRATIONS: Array<Migration> = arrayOf(
-        // Add migrations here as needed
-        // MIGRATION_1_2,
-        // MIGRATION_2_3,
     )
 
     /**

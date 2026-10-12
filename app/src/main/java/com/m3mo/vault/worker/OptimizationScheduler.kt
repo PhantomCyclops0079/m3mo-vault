@@ -61,13 +61,11 @@ class OptimizationScheduler(
         get() = WorkManager.getInstance(context)
 
     companion object {
-        // Default schedule: 3 AM for decay, Sunday 6 PM for review
         const val DEFAULT_DECAY_HOUR = 3
         const val DEFAULT_REVIEW_DAY = Calendar.SUNDAY
         const val DEFAULT_REVIEW_HOUR = 18
     }
 
-    // ========== Schedule All ==========
 
     /**
      * Schedule all periodic workers with default settings
@@ -92,7 +90,6 @@ class OptimizationScheduler(
         logger.i(LogTags.WORKER, "All workers cancelled")
     }
 
-    // ========== SmartDecay Scheduling ==========
 
     /**
      * Schedule daily SmartDecay optimization
@@ -166,7 +163,6 @@ class OptimizationScheduler(
         logger.i(LogTags.WORKER, "SmartDecay cancelled")
     }
 
-    // ========== Review Scheduling ==========
 
     /**
      * Schedule weekly review generation (Sunday evening)
@@ -175,7 +171,7 @@ class OptimizationScheduler(
         dayOfWeek: Int = DEFAULT_REVIEW_DAY,
         hour: Int = DEFAULT_REVIEW_HOUR
     ) {
-        val constraints = Constraints.Builder().build() // Lightweight, no constraints needed
+        val constraints = Constraints.Builder().build()
 
         val initialDelay = calculateWeeklyDelay(dayOfWeek, hour)
 
@@ -220,7 +216,6 @@ class OptimizationScheduler(
         logger.i(LogTags.WORKER, "Manual review triggered")
     }
 
-    // ========== Cleanup Scheduling ==========
 
     /**
      * Schedule weekly cleanup (runs after review, low priority)
@@ -266,7 +261,6 @@ class OptimizationScheduler(
         logger.i(LogTags.WORKER, "Manual cleanup triggered")
     }
 
-    // ========== Status Monitoring ==========
 
     /**
      * Observe SmartDecay worker status
@@ -300,7 +294,6 @@ class OptimizationScheduler(
         )
     }
 
-    // ========== Internal Helpers ==========
 
     /**
      * Calculate delay to next occurrence of target hour today or tomorrow
@@ -314,7 +307,6 @@ class OptimizationScheduler(
             set(Calendar.MILLISECOND, 0)
         }
 
-        // If target time already passed today, schedule for tomorrow
         if (target.before(now)) {
             target.add(Calendar.DAY_OF_MONTH, 1)
         }
@@ -335,7 +327,6 @@ class OptimizationScheduler(
             set(Calendar.MILLISECOND, 0)
         }
 
-        // If target time already passed this week, schedule for next week
         if (target.before(now)) {
             target.add(Calendar.WEEK_OF_YEAR, 1)
         }

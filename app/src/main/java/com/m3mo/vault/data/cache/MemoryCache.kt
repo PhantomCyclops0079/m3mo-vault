@@ -51,13 +51,11 @@ class MemoryCache(
     private val cache: LinkedHashMap<Long, CacheEntry> = object : LinkedHashMap<Long, CacheEntry>(
         policy.maxSize,
         0.75f,
-        true  // accessOrder = true for LRU behavior
+        true
     ) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Long, CacheEntry>?): Boolean {
-            // Don't auto-remove pinned items
             if (eldest != null && size > policy.maxSize) {
                 val entry = eldest.value
-                // Skip eviction if pinned and policy says to keep pinned
                 if (policy.alwaysCachePinned && entry.item.isPinned) {
                     return false
                 }
@@ -68,10 +66,8 @@ class MemoryCache(
         }
     }
 
-    // Lock for thread-safe access
     private val lock = ReentrantReadWriteLock()
 
-    // Statistics
     private val hitCount = AtomicLong(0)
     private val missCount = AtomicLong(0)
     private val evictionCount = AtomicLong(0)
@@ -96,7 +92,6 @@ class MemoryCache(
                     null
                 }
                 entry.isExpired(now, policy.ttlMillis) -> {
-                    // Mark for removal (can't modify during read)
                     missCount.incrementAndGet()
                     null
                 }
@@ -106,7 +101,6 @@ class MemoryCache(
                 }
             }
         }.also { result ->
-            // Remove expired entry outside of read lock
             if (result == null) {
                 lock.write {
                     val entry = cache[id]
@@ -149,7 +143,6 @@ class MemoryCache(
             }
         }
 
-        // Remove expired entries
         if (expiredIds.isNotEmpty()) {
             lock.write {
                 expiredIds.forEach { cache.remove(it) }

@@ -54,14 +54,12 @@ class SearchEngine(
         val startTime = clock.nowMillis()
 
         return try {
-            // Execute search based on mode
             val results = when (query.mode) {
                 SearchMode.KEYWORD -> searchKeywordOnly(query)
                 SearchMode.SEMANTIC -> searchSemanticOnly(query)
                 SearchMode.HYBRID -> searchHybrid(query)
             }
 
-            // Apply query filters
             val filtered = filterResults(results, query)
 
             val searchTime = clock.nowMillis() - startTime
@@ -91,7 +89,6 @@ class SearchEngine(
      * Quick search using FTS (fastest)
      */
     suspend fun quickSearch(queryText: String, limit: Int = 10): List<SearchResult> {
-        // Use FTS-based keyword matcher directly
         return keywordMatcher.search(queryText, limit)
     }
 
@@ -106,7 +103,6 @@ class SearchEngine(
      * Find similar memories
      */
     suspend fun findSimilar(memory: MemoryItem, limit: Int = 10): List<SearchResult> {
-        // Get candidates via FTS using memory content
         val keywords = memory.content.split(" ")
             .filter { it.length > 3 }
             .take(5)
@@ -116,7 +112,6 @@ class SearchEngine(
         val candidates = when (candidatesResult) {
             is AppResult.Success -> candidatesResult.value.filter { it.id != memory.id }
             is AppResult.Failure -> {
-                // Fallback to recent memories
                 val recentResult = repository.getRecent(limit * 3)
                 when (recentResult) {
                     is AppResult.Success -> recentResult.value.filter { it.id != memory.id }
@@ -136,7 +131,6 @@ class SearchEngine(
         return AppResult.success(results)
     }
 
-    // ========== Internal Methods ==========
 
     /**
      * Keyword-only search (uses FTS)
@@ -154,12 +148,10 @@ class SearchEngine(
      * Semantic-only search
      */
     private suspend fun searchSemanticOnly(query: SearchQuery): List<SearchResult> {
-        // Get candidates via FTS first (much faster than full scan)
         val candidatesResult = repository.searchFts(query.text, query.limit * 3)
         val candidates = when (candidatesResult) {
             is AppResult.Success -> candidatesResult.value
             is AppResult.Failure -> {
-                // Fallback to recent memories if FTS fails
                 val recentResult = repository.getRecent(query.limit * 3)
                 when (recentResult) {
                     is AppResult.Success -> recentResult.value
@@ -189,11 +181,9 @@ class SearchEngine(
      * Hybrid search (FTS keyword + semantic)
      */
     private suspend fun searchHybrid(query: SearchQuery): List<SearchResult> {
-        // Stage 1: FTS keyword search (fast)
         val keywordResults = keywordMatcher.search(query.text, query.limit * 2)
         val keywordScores = keywordResults.associate { it.memory.id to it.score }
 
-        // Stage 2: Semantic search on FTS results (avoids full scan)
         val candidates = keywordResults.map { it.memory }
 
         val semanticScores = if (candidates.isNotEmpty()) {
@@ -209,7 +199,6 @@ class SearchEngine(
             emptyMap()
         }
 
-        // Merge results with weighted scoring
         val allMemoryIds = (keywordScores.keys + semanticScores.keys).toSet()
         val memoryMap = candidates.associateBy { it.id }
 
@@ -218,12 +207,10 @@ class SearchEngine(
             val keywordScore = keywordScores[memoryId] ?: 0f
             val semanticScore = semanticScores[memoryId] ?: 0f
 
-            // Weighted combination
             val hybridScore = (keywordScore * KEYWORD_WEIGHT) + (semanticScore * SEMANTIC_WEIGHT)
 
             if (hybridScore < query.minScore) return@mapNotNull null
 
-            // Get match info from keyword results
             val keywordResult = keywordResults.find { it.memory.id == memoryId }
 
             SearchResult.hybrid(
@@ -247,18 +234,15 @@ class SearchEngine(
         val memory = result.memory
         val now = clock.nowMillis()
 
-        // Recency bonus
         val daysSinceAccess = (now - memory.lastAccessedAt) / MS_PER_DAY
         if (daysSinceAccess < RECENCY_DAYS) {
             bonus += RECENCY_BONUS
         }
 
-        // High weight bonus
         if (memory.weight >= HIGH_WEIGHT_THRESHOLD) {
             bonus += HIGH_WEIGHT_BONUS
         }
 
-        // Pinned bonus
         if (memory.isPinned) {
             bonus += PINNED_BONUS
         }
@@ -281,19 +265,16 @@ class SearchEngine(
     private fun filterResults(results: List<SearchResult>, query: SearchQuery): List<SearchResult> {
         var filtered = results
 
-        // Filter by types if specified
         query.types?.let { types ->
             filtered = filtered.filter { it.memory.type in types }
         }
 
-        // Filter by tags if specified
         query.tags?.let { tags ->
             filtered = filtered.filter { result ->
                 result.memory.tags.any { it in tags }
             }
         }
 
-        // Exclude archived unless requested
         if (!query.includeArchived) {
             filtered = filtered.filter {
                 it.memory.state != com.m3mo.vault.domain.model.ProcessingState.ARCHIVED

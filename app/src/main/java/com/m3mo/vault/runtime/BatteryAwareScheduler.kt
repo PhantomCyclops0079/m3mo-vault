@@ -48,17 +48,14 @@ class BatteryAwareScheduler(
     private val context: Context,
     private val logger: Logger
 ) {
-    // Current state
     @Volatile private var batteryPercent: Int = 50
     @Volatile private var isCharging: Boolean = false
     @Volatile private var thermalState: ThermalState = ThermalState.NOMINAL
     @Volatile private var isPowerSaveMode: Boolean = false
 
-    // Listeners
     private val conditionListeners = CopyOnWriteArrayList<OptimalConditionListener>()
     private val stateListeners = CopyOnWriteArrayList<BatteryStateListener>()
 
-    // Battery receiver
     private var batteryReceiver: BroadcastReceiver? = null
     private var isRegistered = false
 
@@ -111,7 +108,6 @@ class BatteryAwareScheduler(
         logger.d(LogTags.WORKER, "BatteryAwareScheduler: Stopped monitoring")
     }
 
-    // ========== Scheduling Decisions ==========
 
     /**
      * Can run full nightly optimization?
@@ -172,11 +168,10 @@ class BatteryAwareScheduler(
      */
     fun estimatedTimeToOptimal(): Long? {
         if (isOptimalCondition()) return 0
-        if (isCharging) return 5 * 60 * 1000L // ~5 minutes estimate
-        return null // Unknown - not charging
+        if (isCharging) return 5 * 60 * 1000L
+        return null
     }
 
-    // ========== Current State ==========
 
     /**
      * Get current battery percent
@@ -214,7 +209,6 @@ class BatteryAwareScheduler(
         checkOptimalConditionChange(wasOptimal)
     }
 
-    // ========== Listeners ==========
 
     /**
      * Add listener for optimal conditions
@@ -244,7 +238,6 @@ class BatteryAwareScheduler(
         stateListeners.remove(listener)
     }
 
-    // ========== Internal Methods ==========
 
     private fun updateBatteryState() {
         try {
@@ -328,11 +321,11 @@ class BatteryAwareScheduler(
  * Processing intensity levels
  */
 enum class ProcessingIntensity {
-    NONE,   // No processing allowed
-    LOW,    // Essential operations only
-    MEDIUM, // Incremental optimization
-    HIGH,   // Full optimization
-    FULL    // Aggressive optimization (charging + good battery)
+    NONE,
+    LOW,
+    MEDIUM,
+    HIGH,
+    FULL
 }
 
 /**

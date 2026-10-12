@@ -71,7 +71,6 @@ fun HomeScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
-    // Handle delete feedback
     LaunchedEffect(deleteResult) {
         when (val result = deleteResult) {
             is DeleteResult.Success -> {
@@ -120,14 +119,12 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Filter chips
             FilterChipRow(
                 selectedFilter = selectedFilter,
                 stats = stats,
                 onFilterSelected = { viewModel.setFilter(it) }
             )
 
-            // Content
             when (val state = uiState) {
                 is UiState.Loading -> LoadingIndicator()
                 is UiState.Empty -> EmptyState()
@@ -158,14 +155,12 @@ private fun FilterChipRow(
             .padding(horizontal = 16.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // All filter
         FilterChip(
             selected = selectedFilter == null,
             onClick = { onFilterSelected(null) },
             label = { Text("All (${stats.total})") }
         )
 
-        // Type filters
         FilterChip(
             selected = selectedFilter == MemoryType.FACT,
             onClick = { onFilterSelected(MemoryType.FACT) },
@@ -204,7 +199,6 @@ private fun MemoryList(
                 onDelete = { onItemDelete(memory) }
             )
         }
-        // Bottom padding for FAB clearance
         item { Spacer(modifier = Modifier.height(80.dp)) }
     }
 }

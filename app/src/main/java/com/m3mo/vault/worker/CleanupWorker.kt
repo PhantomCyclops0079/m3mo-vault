@@ -40,12 +40,10 @@ class CleanupWorker(
         const val TAG = "CleanupWorker"
         const val UNIQUE_WORK_NAME = "m3mo_cleanup"
 
-        // How long to keep tombstoned memories before hard-delete
         const val RETENTION_DAYS = 30
         private const val MS_PER_DAY = 24 * 60 * 60 * 1000L
         private const val VACUUM_THRESHOLD = 10
 
-        // Output keys
         const val KEY_DELETED_COUNT = "deleted_count"
         const val KEY_VACUUMED = "vacuumed"
         const val KEY_DURATION_MS = "duration_ms"
@@ -59,7 +57,6 @@ class CleanupWorker(
         try {
             val cutoffTime = clock.nowMillis() - (RETENTION_DAYS * MS_PER_DAY)
 
-            // Hard-delete tombstoned memories older than retention period
             val cleanupResult = repository.cleanupTombstoned(cutoffTime)
 
             val deletedCount = when (cleanupResult) {
@@ -70,7 +67,6 @@ class CleanupWorker(
                 }
             }
 
-            // Vacuum if significant deletions
             var vacuumed = false
             if (deletedCount >= VACUUM_THRESHOLD) {
                 when (repository.vacuum()) {
@@ -86,7 +82,6 @@ class CleanupWorker(
 
             val duration = clock.nowMillis() - startTime
 
-            // Publish event
             eventBus.publish(CleanupCompletedEvent(
                 deletedCount = deletedCount,
                 vacuumed = vacuumed,

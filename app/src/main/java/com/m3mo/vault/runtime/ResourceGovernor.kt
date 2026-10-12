@@ -52,16 +52,12 @@ class ResourceGovernor(
     private val logger: Logger
 ) : IResourceGovernor {
 
-    // Current state (cached, updated periodically)
     private val currentState = AtomicReference(ResourceState.unknown())
 
-    // Active budgets
     private val activeBudgets = CopyOnWriteArrayList<ResourceBudget>()
 
-    // Pressure listeners
     private val pressureListeners = CopyOnWriteArrayList<ResourcePressureListener>()
 
-    // Last known pressure level (for change detection)
     private var lastPressureLevel = PressureLevel.NORMAL
 
     init {
@@ -76,25 +72,21 @@ class ResourceGovernor(
     override fun canProceed(cost: ResourceCost): Boolean {
         val state = getCurrentState()
 
-        // Critical pressure - deny all non-essential
         if (state.pressureLevel == PressureLevel.CRITICAL) {
             logger.w(LogTags.METRICS, "Operation denied: critical resource pressure")
             return false
         }
 
-        // Check memory
         if (cost.memoryMb > 0 && cost.memoryMb > state.availableMemoryMb * 0.8) {
             logger.w(LogTags.METRICS, "Operation denied: insufficient memory")
             return false
         }
 
-        // Check thermal state for CPU intensive operations
         if (cost.cpuIntensive && state.thermalState >= ThermalState.SERIOUS) {
             logger.w(LogTags.METRICS, "Operation denied: thermal throttling")
             return false
         }
 
-        // Check battery for long operations
         if (cost.durationEstimateMs > 30_000 && state.batteryPercent < 15 && !state.isCharging) {
             logger.w(LogTags.METRICS, "Operation denied: low battery")
             return false
@@ -106,7 +98,6 @@ class ResourceGovernor(
     override fun requestBudget(operation: OperationType): ResourceBudget? {
         val state = getCurrentState()
 
-        // Determine appropriate budget based on state
         val budget = calculateBudget(operation, state)
 
         if (budget == null) {
@@ -155,7 +146,6 @@ class ResourceGovernor(
         val state = getCurrentState()
         val baseBatchSize = getBaseBatchSize(operation)
 
-        // Scale based on pressure level
         val multiplier = when (state.pressureLevel) {
             PressureLevel.LOW -> 1.5f
             PressureLevel.NORMAL -> 1.0f
@@ -171,17 +161,14 @@ class ResourceGovernor(
         val state = getCurrentState()
         val profile = deviceProfile
 
-        // Critical state - minimal tier
         if (state.pressureLevel >= PressureLevel.HIGH) {
             return AlgorithmTier.MINIMAL
         }
 
-        // Low-end device - minimal tier
         if (profile.tier == DeviceTier.LOW_END) {
             return AlgorithmTier.MINIMAL
         }
 
-        // Mid-range device
         if (profile.tier == DeviceTier.MID_RANGE) {
             return when (state.pressureLevel) {
                 PressureLevel.LOW, PressureLevel.NORMAL -> AlgorithmTier.STANDARD
@@ -189,7 +176,6 @@ class ResourceGovernor(
             }
         }
 
-        // High-end device
         return when (state.pressureLevel) {
             PressureLevel.LOW -> AlgorithmTier.FULL
             PressureLevel.NORMAL -> AlgorithmTier.STANDARD
@@ -217,7 +203,6 @@ class ResourceGovernor(
         return false
     }
 
-    // ========== Internal Methods ==========
 
     /**
      * Refresh resource state from system
@@ -245,13 +230,11 @@ class ResourceGovernor(
 
         currentState.set(newState)
 
-        // Notify listeners if pressure changed
         if (pressureLevel != lastPressureLevel) {
             lastPressureLevel = pressureLevel
             notifyPressureChanged(pressureLevel)
         }
 
-        // Low memory notification
         if (availableMemory < 50) {
             notifyLowMemory(availableMemory.toInt())
         }
@@ -274,7 +257,6 @@ class ResourceGovernor(
      * Calculate budget for operation
      */
     private fun calculateBudget(operation: OperationType, state: ResourceState): ResourceBudget? {
-        // Check if we can proceed at all
         if (state.pressureLevel == PressureLevel.CRITICAL) {
             return null
         }

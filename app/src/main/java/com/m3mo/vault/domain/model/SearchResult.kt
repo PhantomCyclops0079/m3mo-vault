@@ -85,7 +85,6 @@ data class SearchResult(
             keywordScore: Float,
             matchedTerms: List<String>
         ): SearchResult {
-            // Weighted combination of scores
             val combinedScore = (semanticScore * 0.7f) + (keywordScore * 0.3f)
             return SearchResult(
                 memory = memory,
@@ -103,7 +102,6 @@ data class SearchResult(
      */
     fun withSnippet(maxLength: Int = 100): SearchResult {
         if (matchPositions.isEmpty()) {
-            // For semantic search, just take the beginning
             val snippetText = if (memory.content.length > maxLength) {
                 memory.content.take(maxLength - 3) + "..."
             } else {
@@ -112,7 +110,6 @@ data class SearchResult(
             return copy(snippet = snippetText)
         }
 
-        // For keyword search, center around first match
         val firstMatch = matchPositions.first()
         val start = (firstMatch.first - maxLength / 2).coerceAtLeast(0)
         val end = (start + maxLength).coerceAtMost(memory.content.length)

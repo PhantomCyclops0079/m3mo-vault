@@ -44,36 +44,28 @@ class UsageTracker(
     private val clock: Clock,
     private val logger: Logger
 ) {
-    // Memory metrics
     private val memoriesCreated = AtomicInteger(0)
     private val memoriesUpdated = AtomicInteger(0)
     private val memoriesDeleted = AtomicInteger(0)
     private val memoriesViewed = AtomicInteger(0)
 
-    // Search metrics
     private val searchesPerformed = AtomicInteger(0)
     private val searchResultsClicked = AtomicInteger(0)
     private val totalSearchTimeMs = AtomicLong(0)
 
-    // Task metrics
     private val tasksCreated = AtomicInteger(0)
     private val tasksCompleted = AtomicInteger(0)
 
-    // Voice metrics
     private val voiceInputCount = AtomicInteger(0)
     private val voiceInputDurationMs = AtomicLong(0)
 
-    // Daily activity (hour -> count)
     private val hourlyActivity = ConcurrentHashMap<Int, AtomicInteger>()
 
-    // Type distribution
     private val typeDistribution = ConcurrentHashMap<String, AtomicInteger>()
 
-    // Session tracking
     private var sessionStartMs: Long = clock.nowMillis()
     private val sessionCount = AtomicInteger(1)
 
-    // ========== Tracking Methods ==========
 
     /**
      * Track memory created
@@ -163,7 +155,6 @@ class UsageTracker(
         sessionCount.incrementAndGet()
     }
 
-    // ========== Statistics Methods ==========
 
     /**
      * Get current statistics snapshot
@@ -252,7 +243,6 @@ class UsageTracker(
         logger.d(LogTags.METRICS, "Usage statistics reset")
     }
 
-    // ========== Internal Methods ==========
 
     /**
      * Record activity for current hour
@@ -270,30 +260,24 @@ class UsageTracker(
  * Usage statistics snapshot
  */
 data class UsageStats(
-    // Memory metrics
     val memoriesCreated: Int,
     val memoriesUpdated: Int,
     val memoriesDeleted: Int,
     val memoriesViewed: Int,
 
-    // Search metrics
     val searchesPerformed: Int,
     val avgSearchTimeMs: Long,
     val searchClickRate: Float,
 
-    // Task metrics
     val tasksCreated: Int,
     val tasksCompleted: Int,
     val taskCompletionRate: Float,
 
-    // Voice metrics
     val voiceInputCount: Int,
     val voiceInputDurationMs: Long,
 
-    // Session
     val sessionCount: Int,
 
-    // Distribution
     val typeDistribution: Map<String, Int>
 ) {
     /**

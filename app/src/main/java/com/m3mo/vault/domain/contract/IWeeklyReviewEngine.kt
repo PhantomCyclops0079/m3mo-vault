@@ -131,7 +131,7 @@ data class WeeklyReviewConfig(
     /**
      * Cache duration in milliseconds
      */
-    val cacheDurationMs: Long = 3600000 // 1 hour
+    val cacheDurationMs: Long = 3600000
 ) {
     companion object {
         fun default(): WeeklyReviewConfig = WeeklyReviewConfig()

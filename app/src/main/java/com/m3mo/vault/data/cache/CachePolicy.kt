@@ -52,8 +52,8 @@ data class CachePolicy(
 ) {
     companion object {
         const val DEFAULT_MAX_SIZE = 100
-        const val DEFAULT_TTL_MILLIS = 5 * 60 * 1000L  // 5 minutes
-        const val DEFAULT_MAX_MEMORY_BYTES = 10 * 1024 * 1024L  // 10 MB
+        const val DEFAULT_TTL_MILLIS = 5 * 60 * 1000L
+        const val DEFAULT_MAX_MEMORY_BYTES = 10 * 1024 * 1024L
 
         /**
          * Minimal cache for low-memory devices

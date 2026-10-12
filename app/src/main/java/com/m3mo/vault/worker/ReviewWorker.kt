@@ -45,10 +45,8 @@ class ReviewWorker(
         const val TAG = "ReviewWorker"
         const val UNIQUE_WORK_NAME = "m3mo_weekly_review"
 
-        // Input keys
         const val KEY_WEEK_START_MS = "week_start_ms"
 
-        // Output keys
         const val KEY_MEMORIES_IN_REVIEW = "memories_in_review"
         const val KEY_TASKS_COMPLETED = "tasks_completed"
         const val KEY_DECAYING_COUNT = "decaying_count"
@@ -61,7 +59,6 @@ class ReviewWorker(
         logger.i(LogTags.WORKER, "Review worker starting (attempt=$runAttemptCount)")
 
         try {
-            // Generate review: use provided week start or default to current week
             val weekStartMs = inputData.getLong(KEY_WEEK_START_MS, 0L)
             val reviewResult = if (weekStartMs > 0) {
                 reviewGenerator.generateReviewForWeek(weekStartMs)
@@ -74,7 +71,6 @@ class ReviewWorker(
                     val review = reviewResult.value
                     val duration = clock.nowMillis() - startTime
 
-                    // Publish event for UI subscribers
                     eventBus.publish(ReviewGeneratedEvent(
                         weekStart = review.weekStart,
                         weekEnd = review.weekEnd,

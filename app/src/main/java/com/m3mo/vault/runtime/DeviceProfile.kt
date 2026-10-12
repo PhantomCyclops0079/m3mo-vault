@@ -161,7 +161,7 @@ class DeviceProfile private constructor(
                 availableStorageMb = availableStorageMb,
                 batteryPercent = batteryInfo.first,
                 isCharging = batteryInfo.second,
-                thermalState = ThermalState.NOMINAL, // Updated by system callbacks
+                thermalState = ThermalState.NOMINAL,
                 apiLevel = Build.VERSION.SDK_INT,
                 deviceModel = "${Build.MANUFACTURER} ${Build.MODEL}",
                 isLowRamDevice = isLowRamDevice
@@ -204,29 +204,21 @@ class DeviceProfile private constructor(
          * because vector operations are CPU-bound, not memory-bound.
          */
         private fun classifyDevice(ramMb: Int, cores: Int, isLowRamDevice: Boolean): DeviceTier {
-            // If OEM declared low RAM, trust it
             if (isLowRamDevice) return DeviceTier.LOW_END
 
-            // CPU is critical for vector operations
-            // A device with 8GB RAM but 4 cores will struggle with semantic search
             val hasStrongCpu = cores >= 6
             val hasVeryStrongCpu = cores >= 8
             val hasWeakCpu = cores <= 4
 
-            // RAM thresholds
             val hasHighRam = ramMb >= 6000
             val hasMidRam = ramMb >= 3000
             val hasLowRam = ramMb < 3000
 
             return when {
-                // Low-end: Either low RAM or weak CPU
                 hasLowRam || hasWeakCpu -> DeviceTier.LOW_END
 
-                // High-end: Both high RAM and strong CPU
                 hasHighRam && hasVeryStrongCpu -> DeviceTier.HIGH_END
 
-                // Mid-range: Everything else
-                // Including: high RAM + moderate CPU, moderate RAM + strong CPU
                 else -> DeviceTier.MID_RANGE
             }
         }
@@ -240,7 +232,7 @@ class DeviceProfile private constructor(
                 val availableBytes = stat.availableBlocksLong * stat.blockSizeLong
                 (availableBytes / (1024 * 1024)).toInt()
             } catch (e: Exception) {
-                1000 // Default 1GB
+                1000
             }
         }
 
@@ -264,7 +256,7 @@ class DeviceProfile private constructor(
 
                 Pair(percent, isCharging)
             } catch (e: Exception) {
-                Pair(50, false) // Default values
+                Pair(50, false)
             }
         }
     }

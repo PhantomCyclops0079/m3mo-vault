@@ -55,7 +55,6 @@ class BoostSubscriber(
                     logger.d(LogTags.DECAY, "Boost: memory ${event.memoryId} reviewed")
                 }
                 AccessType.SEARCH_RESULT -> {
-                    // No boost for simply appearing in search results
                 }
             }
         }
