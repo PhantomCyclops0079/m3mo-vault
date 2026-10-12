@@ -28,8 +28,8 @@ import androidx.room.PrimaryKey
         Index(value = ["createdAt"]),
         Index(value = ["lastAccessedAt"]),
         Index(value = ["isPinned"]),
-        Index(value = ["state", "weight"]),  // Composite for decay queries
-        Index(value = ["state", "type"])     // Composite for filtered searches
+        Index(value = ["state", "weight"]),
+        Index(value = ["state", "type"])
     ]
 )
 data class MemoryEntity(

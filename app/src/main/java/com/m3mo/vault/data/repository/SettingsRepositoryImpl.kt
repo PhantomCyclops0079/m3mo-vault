@@ -22,7 +22,6 @@ class SettingsRepositoryImpl(
     private val jsonCodec: JsonCodec,
     private val clock: Clock
 ) {
-    // ========== String Settings ==========
 
     suspend fun getString(key: String, default: String? = null): String? {
         val entity = settingsDao.get(key) ?: return default
@@ -43,7 +42,6 @@ class SettingsRepositoryImpl(
         return settingsDao.observe(key).map { it?.value }
     }
 
-    // ========== Int Settings ==========
 
     suspend fun getInt(key: String, default: Int): Int {
         val entity = settingsDao.get(key) ?: return default
@@ -66,7 +64,6 @@ class SettingsRepositoryImpl(
         }
     }
 
-    // ========== Long Settings ==========
 
     suspend fun getLong(key: String, default: Long): Long {
         val entity = settingsDao.get(key) ?: return default
@@ -83,7 +80,6 @@ class SettingsRepositoryImpl(
         settingsDao.upsert(entity)
     }
 
-    // ========== Float Settings ==========
 
     suspend fun getFloat(key: String, default: Float): Float {
         val entity = settingsDao.get(key) ?: return default
@@ -100,7 +96,6 @@ class SettingsRepositoryImpl(
         settingsDao.upsert(entity)
     }
 
-    // ========== Boolean Settings ==========
 
     suspend fun getBoolean(key: String, default: Boolean): Boolean {
         val entity = settingsDao.get(key) ?: return default
@@ -123,7 +118,6 @@ class SettingsRepositoryImpl(
         }
     }
 
-    // ========== JSON Settings ==========
 
     /**
      * Get a JSON-serialized setting
@@ -145,7 +139,6 @@ class SettingsRepositoryImpl(
         settingsDao.upsert(entity)
     }
 
-    // ========== Batch Operations ==========
 
     suspend fun getAll(): Map<String, String> {
         return settingsDao.getAll().associate { it.key to it.value }
@@ -167,9 +160,7 @@ class SettingsRepositoryImpl(
         settingsDao.deleteAll()
     }
 
-    // ========== Convenience Methods for Common Settings ==========
 
-    // Decay settings
     suspend fun isDecayEnabled(): Boolean =
         getBoolean("decay.enabled", SettingsDefaults.DECAY_ENABLED)
 
@@ -185,7 +176,6 @@ class SettingsRepositoryImpl(
     suspend fun getDecayBatchSize(): Int =
         getInt("decay.batch_size", SettingsDefaults.DECAY_BATCH_SIZE)
 
-    // Review settings
     suspend fun getReviewDayOfWeek(): Int =
         getInt("review.day_of_week", SettingsDefaults.REVIEW_DAY_OF_WEEK)
 
@@ -198,7 +188,6 @@ class SettingsRepositoryImpl(
     suspend fun setLastReviewTimestamp(timestamp: Long) =
         setLong("review.last_timestamp", timestamp)
 
-    // Stats
     suspend fun getTotalMemoriesCreated(): Long =
         getLong("stats.total_created", 0L)
 
@@ -213,7 +202,6 @@ class SettingsRepositoryImpl(
     suspend fun setLastOptimizationTimestamp(timestamp: Long) =
         setLong("stats.last_optimization", timestamp)
 
-    // App state
     suspend fun isFirstLaunchCompleted(): Boolean =
         getBoolean("app.first_launch_completed", false)
 
@@ -226,7 +214,6 @@ class SettingsRepositoryImpl(
     suspend fun setOnboardingCompleted() =
         setBoolean("app.onboarding_completed", true)
 
-    // Theme
     suspend fun getThemeMode(): String =
         getString("ui.theme_mode", SettingsDefaults.THEME_MODE) ?: SettingsDefaults.THEME_MODE
 

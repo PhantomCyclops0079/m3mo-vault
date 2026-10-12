@@ -34,10 +34,8 @@ class ConsolidationSuggester(
     }
 
     suspend fun getSuggestions(limit: Int = MAX_SUGGESTIONS): AppResult<List<ConsolidationSuggestion>, AppError> =
-        // Run pairwise comparisons off the main thread.
         withContext(Dispatchers.Default) {
             try {
-                // Check the configured 50 MB resource budget.
                 if (!governor.canProceed(ResourceCost(memoryMb = 50))) {
                     logger.w(LogTags.SEARCH, "Consolidation skipped: Insufficient resources")
                     return@withContext AppResult.failure(
@@ -126,7 +124,6 @@ class ConsolidationSuggester(
 
         if (candidates.isEmpty()) return AppResult.success(emptyList())
 
-        // Wrap the input text in a temporary record for similarity matching.
         val tempMemory = candidates.first().copy(
             id = -1,
             content = content,

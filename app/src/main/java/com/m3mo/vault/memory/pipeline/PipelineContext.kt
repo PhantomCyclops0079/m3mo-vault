@@ -27,20 +27,16 @@ class PipelineContext(
      */
     val budget: ResourceBudget = ResourceBudget.default()
 ) {
-    // Processing results
     private val _processedMemories = mutableListOf<MemoryItem>()
     val processedMemories: List<MemoryItem> get() = _processedMemories.toList()
 
-    // Stage results
     private val stageResults = mutableMapOf<PipelineStage, StageResult>()
 
-    // Metrics
     private val processedCount = AtomicInteger(0)
     private val errorCount = AtomicInteger(0)
     private val startTimeMs = AtomicLong(0)
     private val stageTimings = mutableMapOf<PipelineStage, Long>()
 
-    // State flags
     @Volatile var isCancelled = false
         private set
 
@@ -149,9 +145,9 @@ class PipelineContext(
  */
 enum class PipelineStage {
     INITIALIZATION,
-    STAGE_1_NORMALIZE,    // Normalization + Classification
-    STAGE_2_VECTORIZE,    // Vectorization + Clustering (adaptive)
-    STAGE_3_DECAY,        // SmartDecay + Storage Strategy
+    STAGE_1_NORMALIZE,
+    STAGE_2_VECTORIZE,
+    STAGE_3_DECAY,
     FINALIZATION,
     COMPLETED
 }
@@ -305,7 +301,7 @@ data class ResourceBudget(
     /**
      * Maximum memory usage in bytes
      */
-    val maxMemoryBytes: Long = 50 * 1024 * 1024,  // 50MB
+    val maxMemoryBytes: Long = 50 * 1024 * 1024,
 
     /**
      * Maximum items to process
@@ -327,7 +323,6 @@ data class ResourceBudget(
     fun isExhausted(): Boolean {
         if (System.currentTimeMillis() - startTimeMs > maxTimeMs) return true
         if (itemsProcessed >= maxItems) return true
-        // Memory check would require Android-specific APIs
         return false
     }
 

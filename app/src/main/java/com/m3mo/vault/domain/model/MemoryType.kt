@@ -100,7 +100,7 @@ fun MemoryType.hasTemporal(): Boolean = this == MemoryType.EPISODE || this == Me
  * Extension to get appropriate decay rate multiplier
  */
 fun MemoryType.decayMultiplier(): Double = when (this) {
-    MemoryType.FACT -> 0.8      // Facts decay slower
-    MemoryType.EPISODE -> 1.2   // Episodes decay faster
-    MemoryType.TASK -> 1.0      // Tasks decay normally
+    MemoryType.FACT -> 0.8
+    MemoryType.EPISODE -> 1.2
+    MemoryType.TASK -> 1.0
 }

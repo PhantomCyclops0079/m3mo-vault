@@ -108,7 +108,6 @@ class FakeClock(
 
     override fun zone(): ZoneId = zoneId
 
-    // ========== Test Control Methods ==========
 
     /**
      * Set the current time to a specific instant
@@ -177,7 +176,6 @@ class FakeClock(
     }
 }
 
-// ========== Extension Functions ==========
 
 /**
  * Calculate days between two timestamps

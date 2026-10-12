@@ -53,7 +53,6 @@ class DecayExecutor(
         logger.i(LogTags.DECAY, "Starting decay run, batch size: $batchSize")
 
         return try {
-            // Step 1: Fetch eligible memories
             val fetchResult = repository.getDecayEligible(batchSize)
             val memories = when (fetchResult) {
                 is AppResult.Success -> fetchResult.value
@@ -70,11 +69,9 @@ class DecayExecutor(
 
             logger.d(LogTags.DECAY, "Fetched ${memories.size} eligible memories")
 
-            // Step 2: Apply decay strategy
-            coroutineContext.ensureActive()  // Check for cancellation
+            coroutineContext.ensureActive()
             val batchResult = strategy.applyBatch(memories, startTime)
 
-            // Step 3: Persist changes
             coroutineContext.ensureActive()
             val persistResult = persistDecayResults(memories, batchResult, onProgress)
 
@@ -171,7 +168,6 @@ class DecayExecutor(
         val toArchive = mutableListOf<Long>()
         val toTombstone = mutableListOf<Long>()
 
-        // Categorize results
         for (result in batchResult.results) {
             if (!result.changed) continue
 
@@ -199,7 +195,6 @@ class DecayExecutor(
             }
         }
 
-        // Batch update weights
         if (toUpdate.isNotEmpty()) {
             coroutineContext.ensureActive()
             val updateResult = repository.updateBatch(toUpdate)
@@ -214,7 +209,6 @@ class DecayExecutor(
             onProgress?.invoke(toUpdate.size, batchResult.totalProcessed)
         }
 
-        // Delete tombstoned
         if (toTombstone.isNotEmpty()) {
             coroutineContext.ensureActive()
             repository.deleteBatch(toTombstone)

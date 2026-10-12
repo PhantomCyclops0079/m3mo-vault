@@ -44,15 +44,12 @@ object EmbeddingSerializer {
     fun serializeToBytes(vector: Map<Int, Float>): ByteArray {
         if (vector.isEmpty()) return ByteArray(0)
 
-        // Calculate buffer size: 4 (count) + 8 per entry (4 index + 4 value)
         val bufferSize = 4 + (vector.size * 8)
         val buffer = ByteBuffer.allocate(bufferSize)
         buffer.order(ByteOrder.LITTLE_ENDIAN)
 
-        // Write count
         buffer.putInt(vector.size)
 
-        // Write entries
         for ((index, value) in vector) {
             buffer.putInt(index)
             buffer.putFloat(value)
@@ -150,7 +147,6 @@ object EmbeddingSerializer {
      */
     fun isBinaryFormat(encoded: String): Boolean {
         if (encoded.isBlank()) return false
-        // JSON starts with '[' or '{', Base64 doesn't
         return !encoded.startsWith('[') && !encoded.startsWith('{')
     }
 
@@ -164,7 +160,7 @@ object EmbeddingSerializer {
             val vector = deserializeJson(json)
             serialize(vector)
         } catch (e: Exception) {
-            json  // Keep original if migration fails
+            json
         }
     }
 

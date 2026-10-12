@@ -33,32 +33,27 @@ class DefaultNormalizer(
     fun normalize(content: String): String {
         if (content.isBlank()) return ""
 
-        // Fast path: use single-pass normalization for better performance
         val result = StringBuilder(content.length)
         var lastWasWhitespace = false
         var prevChar = ' '
 
         for (char in content) {
             val normalized = when {
-                // Step 1 & 2: Case folding
                 config.lowercase && char.isUpperCase() -> char.lowercaseChar()
                 else -> char
             }
 
-            // Step 3 & 4: Whitespace and punctuation handling
             val isWhitespace = normalized.isWhitespace()
             val isPunctuation = config.removePunctuation && !normalized.isLetterOrDigit() && !isWhitespace
 
             when {
                 isPunctuation -> {
-                    // Replace punctuation with space (if normalizeWhitespace)
                     if (config.normalizeWhitespace && !lastWasWhitespace) {
                         result.append(' ')
                         lastWasWhitespace = true
                     }
                 }
                 isWhitespace -> {
-                    // Collapse multiple whitespace into single space
                     if (config.normalizeWhitespace) {
                         if (!lastWasWhitespace && result.isNotEmpty()) {
                             result.append(' ')
@@ -78,7 +73,6 @@ class DefaultNormalizer(
 
         var finalResult = result.toString().trim()
 
-        // Step 5: Remove stop words (only if enabled - requires tokenization)
         if (config.removeStopWords) {
             finalResult = removeStopWords(finalResult)
         }
@@ -134,7 +128,6 @@ class DefaultNormalizer(
 
         var result = word
 
-        // Common English suffixes
         val suffixes = listOf(
             "ing", "ed", "es", "s", "tion", "ness", "ment", "able", "ible", "ly"
         )
@@ -168,7 +161,6 @@ class DefaultNormalizer(
 
         for (token in tokens) {
             expanded.add(token)
-            // Add synonyms if available
             SYNONYMS[token]?.let { synonyms ->
                 expanded.addAll(synonyms)
             }
@@ -177,10 +169,8 @@ class DefaultNormalizer(
         return expanded.distinct()
     }
 
-    // ========== Internal Methods ==========
 
     private fun unicodeNormalize(text: String): String {
-        // NFD decompose, then NFC compose for consistent representation
         val nfd = Normalizer.normalize(text, Normalizer.Form.NFD)
         return Normalizer.normalize(nfd, Normalizer.Form.NFC)
     }
@@ -221,31 +211,25 @@ class DefaultNormalizer(
          * mentioned in the patent for improved semantic matching.
          */
         val SYNONYMS: Map<String, List<String>> = mapOf(
-            // Transportation
             "car" to listOf("vehicle", "auto", "automobile"),
             "vehicle" to listOf("car", "auto", "automobile"),
             "auto" to listOf("car", "vehicle"),
             
-            // Time
             "meeting" to listOf("appointment", "call", "conference"),
             "appointment" to listOf("meeting", "schedule"),
             
-            // Actions
             "buy" to listOf("purchase", "acquire", "get"),
             "purchase" to listOf("buy", "acquire"),
             "send" to listOf("email", "message", "transmit"),
             "email" to listOf("send", "message", "mail"),
             
-            // Work
             "task" to listOf("todo", "job", "work"),
             "todo" to listOf("task", "item", "action"),
             "project" to listOf("work", "assignment"),
             
-            // People
             "doctor" to listOf("physician", "md", "doc"),
             "lawyer" to listOf("attorney", "counsel"),
             
-            // Common
             "important" to listOf("urgent", "critical", "priority"),
             "urgent" to listOf("important", "critical", "asap"),
             "help" to listOf("assist", "support", "aid"),

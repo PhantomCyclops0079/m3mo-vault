@@ -63,19 +63,16 @@ fun AddMemoryScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val focusRequester = remember { FocusRequester() }
 
-    // Load existing memory if in edit mode
     LaunchedEffect(editMemoryId) {
         if (editMemoryId != null) {
             viewModel.loadForEdit(editMemoryId)
         }
     }
 
-    // Auto-focus content field
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
     }
 
-    // Handle save result
     LaunchedEffect(saveResult) {
         when (val result = saveResult) {
             is SaveResult.Success -> {
@@ -127,7 +124,6 @@ fun AddMemoryScreen(
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Type selector
             Text(
                 text = "Type",
                 style = MaterialTheme.typography.labelLarge,
@@ -141,7 +137,6 @@ fun AddMemoryScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Content input
             OutlinedTextField(
                 value = content,
                 onValueChange = { viewModel.updateContent(it) },
@@ -167,7 +162,6 @@ fun AddMemoryScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Type description
             Text(
                 text = when (selectedType) {
                     MemoryType.FACT -> "Facts are things you know — names, dates, preferences. They tend to stay stable."

@@ -44,13 +44,11 @@ class SmartDecayStrategy(
     }
 
     override fun apply(memory: MemoryItem, currentTimeMs: Long): DecayResult {
-        // Factor 7: Pin Protection (absolute)
         if (memory.isPinned) {
             logger.d(LogTags.DECAY, "Memory ${memory.id} is pinned, skipping decay")
             return DecayResult.skipped(memory.id, memory.weight, "Pinned")
         }
 
-        // Check eligibility
         if (!isEligible(memory)) {
             return DecayResult.skipped(memory.id, memory.weight, "Not eligible")
         }
@@ -89,11 +87,10 @@ class SmartDecayStrategy(
     }
 
     override fun calculateBoost(memory: MemoryItem, accessWeight: Int): Int {
-        // Boost formula: increase by 1-3 based on access type
         val boost = when (accessWeight) {
-            1 -> 1  // View
-            2 -> 2  // Search click
-            3 -> 3  // Edit
+            1 -> 1
+            2 -> 2
+            3 -> 3
             else -> 1
         }
 
@@ -103,13 +100,10 @@ class SmartDecayStrategy(
     }
 
     override fun isEligible(memory: MemoryItem): Boolean {
-        // Pinned memories are never eligible
         if (memory.isPinned) return false
 
-        // Already at minimum weight
         if (memory.weight <= config.minWeight) return false
 
-        // Only process memories in certain states
         val eligibleStates = setOf(
             ProcessingState.STORED,
             ProcessingState.OPTIMIZED
@@ -121,7 +115,6 @@ class SmartDecayStrategy(
 
     override fun getConfig(): DecayConfig = config
 
-    // ========== Core Algorithm ==========
 
     /**
      * Calculate all 7 factors for a memory
@@ -130,29 +123,22 @@ class SmartDecayStrategy(
         val ageInDays = calculateAgeInDays(memory.createdAt, currentTimeMs)
         val daysSinceAccess = calculateDaysSinceAccess(memory.lastAccessedAt, currentTimeMs)
 
-        // Factor 1: Base Decay
         val baseDecay = FactorValue.of(
             name = "baseDecay",
             rawValue = config.decayPerRun.toDouble(),
             contribution = config.decayPerRun.toDouble()
         )
 
-        // Factor 2: Grace Period Protection
         val gracePeriod = calculateGracePeriodFactor(ageInDays)
 
-        // Factor 3: Recency Penalty
         val recencyPenalty = calculateRecencyPenaltyFactor(daysSinceAccess)
 
-        // Factor 4: Frequency Bonus
         val frequencyBonus = calculateFrequencyBonusFactor(memory.accessCount)
 
-        // Factor 5: Confidence Bonus
         val confidenceBonus = calculateConfidenceBonusFactor(memory.confidence)
 
-        // Factor 6: Size Penalty
         val sizePenalty = calculateSizePenaltyFactor(memory.content.length)
 
-        // Factor 7: Pin Protection (already checked above, but include for completeness)
         val pinProtection = FactorValue.of(
             name = "pinProtection",
             rawValue = 0.0,
@@ -228,7 +214,7 @@ class SmartDecayStrategy(
         return FactorValue.of(
             name = "frequencyBonus",
             rawValue = accessCount.toDouble(),
-            contribution = -bonus  // Negative because it reduces decay
+            contribution = -bonus
         )
     }
 
@@ -243,7 +229,7 @@ class SmartDecayStrategy(
      * - Confidence 5: 2 protection
      */
     private fun calculateConfidenceBonusFactor(confidence: Int?): FactorValue {
-        val effectiveConfidence = confidence ?: 3  // Default to neutral
+        val effectiveConfidence = confidence ?: 3
         val bonus = when {
             effectiveConfidence <= 2 -> 0.0
             effectiveConfidence == 3 -> 0.5
@@ -254,7 +240,7 @@ class SmartDecayStrategy(
         return FactorValue.of(
             name = "confidenceBonus",
             rawValue = effectiveConfidence.toDouble(),
-            contribution = -bonus  // Negative because it reduces decay
+            contribution = -bonus
         )
     }
 
@@ -292,7 +278,6 @@ class SmartDecayStrategy(
     private fun calculateEffectiveDecay(factors: DecayFactors): Int {
         val totalContribution = factors.totalContribution
         
-        // Truncate toward zero, then clamp at zero.
         return max(0, totalContribution.toInt())
     }
 
@@ -316,7 +301,6 @@ class SmartDecayStrategy(
         }
     }
 
-    // ========== Utility Functions ==========
 
     private fun calculateAgeInDays(createdAt: Long, currentTimeMs: Long): Long {
         return (currentTimeMs - createdAt) / MILLIS_PER_DAY

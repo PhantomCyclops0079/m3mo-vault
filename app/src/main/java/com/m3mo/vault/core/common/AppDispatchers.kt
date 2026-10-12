@@ -82,13 +82,9 @@ class DefaultAppDispatchers : AppDispatchers {
 
     override val unconfined: CoroutineDispatcher = Dispatchers.Unconfined
 
-    // Limit database operations to 4 concurrent threads
-    // Prevents SQLite "database is locked" errors
     override val database: CoroutineDispatcher =
         Dispatchers.IO.limitedParallelism(4)
 
-    // Optimization runs on 2 threads - enough for parallelism
-    // but doesn't starve other operations
     override val optimization: CoroutineDispatcher =
         Dispatchers.Default.limitedParallelism(2)
 

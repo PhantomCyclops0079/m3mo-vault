@@ -45,11 +45,9 @@ class SmartDecayWorker(
         const val TAG = "SmartDecayWorker"
         const val UNIQUE_WORK_NAME = "m3mo_smart_decay"
 
-        // Input keys
         const val KEY_FORCE_RUN = "force_run"
         const val KEY_MAX_BATCH_SIZE = "max_batch_size"
 
-        // Output keys
         const val KEY_MEMORIES_PROCESSED = "memories_processed"
         const val KEY_MEMORIES_CHANGED = "memories_changed"
         const val KEY_DURATION_MS = "duration_ms"
@@ -63,7 +61,6 @@ class SmartDecayWorker(
 
         logger.i(LogTags.WORKER, "SmartDecay worker starting (attempt=${runAttemptCount}, force=$forceRun)")
 
-        // Check resource budget (skip if forced)
         if (!forceRun) {
             val budget = resourceGovernor.requestBudget(OperationType.DECAY_BATCH)
             if (budget == null) {
@@ -73,7 +70,6 @@ class SmartDecayWorker(
         }
 
         try {
-            // Determine batch size
             val maxBatch = inputData.getInt(KEY_MAX_BATCH_SIZE, DEFAULT_BATCH_SIZE)
             val batchSize = if (forceRun) {
                 maxBatch
@@ -82,8 +78,6 @@ class SmartDecayWorker(
                     .coerceAtMost(maxBatch)
             }
 
-            // Delegate to RunDecayUseCase — single source of truth for decay logic
-            // UseCase handles: get eligible → apply SmartDecay → update DB → publish events
             val decayResult = runDecayUseCase.executeBatch(batchSize)
 
             val duration = clock.nowMillis() - startTime

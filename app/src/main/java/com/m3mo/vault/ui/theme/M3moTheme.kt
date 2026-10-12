@@ -11,12 +11,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-// M3mo brand colors (memory vault = deep blue-green)
-private val M3moPrimary = Color(0xFF1B6B5A)       // Teal
+private val M3moPrimary = Color(0xFF1B6B5A)
 private val M3moOnPrimary = Color(0xFFFFFFFF)
 private val M3moPrimaryContainer = Color(0xFFB0F1DD)
-private val M3moSecondary = Color(0xFF4A6360)       // Muted teal
-private val M3moTertiary = Color(0xFF436278)         // Blue accent
+private val M3moSecondary = Color(0xFF4A6360)
+private val M3moTertiary = Color(0xFF436278)
 private val M3moError = Color(0xFFBA1A1A)
 
 private val M3moLightScheme = lightColorScheme(
@@ -44,7 +43,6 @@ fun M3moTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
-        // Use dynamic color on Android 12+
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context)

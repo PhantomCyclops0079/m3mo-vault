@@ -64,15 +64,9 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 DATABASE_NAME
             )
-                // Enable Write-Ahead Logging for better concurrent access
                 .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
-                // Add migrations
                 .addMigrations(*DatabaseMigrations.ALL_MIGRATIONS)
-                // Fallback to destructive migration if no migration path
-                // No migrations are registered in this snapshot. A missing migration
-                // path can trigger destructive recreation and data loss.
                 .fallbackToDestructiveMigration()
-                // Build
                 .build()
         }
 
@@ -84,7 +78,7 @@ abstract class AppDatabase : RoomDatabase() {
                 context.applicationContext,
                 AppDatabase::class.java
             )
-                .allowMainThreadQueries() // OK for tests
+                .allowMainThreadQueries()
                 .build()
         }
 

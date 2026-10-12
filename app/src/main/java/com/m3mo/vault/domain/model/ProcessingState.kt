@@ -134,7 +134,7 @@ fun ProcessingState.canTransitionTo(next: ProcessingState): Boolean {
         )
         ProcessingState.QUEUED -> next in setOf(
             ProcessingState.STORED,
-            ProcessingState.NEW,  // Retry on failure
+            ProcessingState.NEW,
             ProcessingState.TOMBSTONED
         )
         ProcessingState.STORED -> next in setOf(
@@ -154,10 +154,10 @@ fun ProcessingState.canTransitionTo(next: ProcessingState): Boolean {
             ProcessingState.TOMBSTONED
         )
         ProcessingState.ARCHIVED -> next in setOf(
-            ProcessingState.STORED,  // Reactivate
+            ProcessingState.STORED,
             ProcessingState.TOMBSTONED
         )
-        ProcessingState.TOMBSTONED -> false  // Terminal state
+        ProcessingState.TOMBSTONED -> false
     }
 }
 

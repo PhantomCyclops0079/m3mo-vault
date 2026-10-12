@@ -47,7 +47,7 @@ class UpdateMemoryUseCase(
                 content = newContent.trim(),
                 normalizedContent = newContent.trim().lowercase(),
                 updatedAt = clock.nowMillis()
-            ).markDirty() // Needs reprocessing
+            ).markDirty()
 
             repository.update(updated).suspendOnSuccess {
                 eventBus.publish(
@@ -82,7 +82,6 @@ class UpdateMemoryUseCase(
                     )
                 )
                 if (it.isPinned) {
-                    // Boost weight when pinned
                     eventBus.publish(
                         WeightChangedEvent(
                             memoryId = id,
@@ -102,7 +101,7 @@ class UpdateMemoryUseCase(
     suspend fun setPin(id: Long, pinned: Boolean): AppResult<MemoryItem, AppError> {
         return repository.getById(id).suspendFlatMap { memory ->
             if (memory.isPinned == pinned) {
-                return@suspendFlatMap AppResult.success(memory) // No change needed
+                return@suspendFlatMap AppResult.success(memory)
             }
 
             val updated = memory.withPin(pinned)

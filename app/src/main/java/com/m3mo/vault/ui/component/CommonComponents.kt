@@ -55,7 +55,6 @@ fun MemoryCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Header: Type badge + Weight + Pin/Delete
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -87,7 +86,6 @@ fun MemoryCard(
                 }
             }
 
-            // Content preview
             Text(
                 text = memory.content,
                 style = MaterialTheme.typography.bodyMedium,
@@ -95,7 +93,6 @@ fun MemoryCard(
                 overflow = TextOverflow.Ellipsis
             )
 
-            // Footer: relative time
             Text(
                 text = DateFormatter.relativeTime(memory.updatedAt),
                 style = MaterialTheme.typography.labelSmall,

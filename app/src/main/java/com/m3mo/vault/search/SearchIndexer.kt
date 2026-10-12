@@ -59,7 +59,6 @@ class SearchIndexer(
     private val clock: Clock,
     private val logger: Logger
 ) {
-    // Index state
     private val isIndexing = AtomicBoolean(false)
     private val lastIndexTime = AtomicLong(0)
     private val indexedCount = AtomicInteger(0)
@@ -92,7 +91,6 @@ class SearchIndexer(
         logger.i(LogTags.SEARCH, "Starting full index build")
 
         return try {
-            // Get all memories needing embedding
             val memoriesResult = repository.getNeedingEmbedding(10000)
             val memories = when (memoriesResult) {
                 is AppResult.Success -> memoriesResult.value
@@ -114,7 +112,6 @@ class SearchIndexer(
                 ))
             }
 
-            // Process in batches
             var processed = 0
             var errors = 0
 
@@ -246,14 +243,11 @@ class SearchIndexer(
         val pendingResult = repository.getNeedingEmbedding(1)
         val pendingCount = when (pendingResult) {
             is AppResult.Success -> {
-                // Need to get actual count
                 val countResult = repository.count()
                 when (countResult) {
                     is AppResult.Success -> {
-                        // Estimate: if we got results, there are more pending
                         if (pendingResult.value.isNotEmpty()) {
-                            // Return actual count from a separate query
-                            pendingResult.value.size * 10 // Estimate
+                            pendingResult.value.size * 10
                         } else 0
                     }
                     is AppResult.Failure -> 0
@@ -277,8 +271,6 @@ class SearchIndexer(
     suspend fun clearIndex(): AppResult<Int, AppError> {
         logger.w(LogTags.SEARCH, "Clearing search index")
 
-        // This would require clearing embeddings from all memories
-        // For now, just reset stats
         indexedCount.set(0)
         errorCount.set(0)
         lastIndexTime.set(0)
@@ -286,7 +278,6 @@ class SearchIndexer(
         return AppResult.success(0)
     }
 
-    // ========== Internal Methods ==========
 
     /**
      * Process a batch of memories
@@ -320,7 +311,6 @@ class SearchIndexer(
             }
         }
 
-        // Batch update
         if (updates.isNotEmpty()) {
             repository.updateBatch(updates)
         }

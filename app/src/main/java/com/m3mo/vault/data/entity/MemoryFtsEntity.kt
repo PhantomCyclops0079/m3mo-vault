@@ -11,7 +11,6 @@ import androidx.room.FtsOptions
     tokenizer = FtsOptions.TOKENIZER_UNICODE61
 )
 data class MemoryFtsEntity(
-    // FTS column names must match the content table's column names.
 
     @ColumnInfo(name = "content")
     val content: String,

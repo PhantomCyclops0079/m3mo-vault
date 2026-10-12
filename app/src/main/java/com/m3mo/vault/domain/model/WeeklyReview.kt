@@ -175,7 +175,6 @@ data class WeeklyStats(
      * Productivity score (0-100)
      */
     val productivityScore: Int get() {
-        // Simple formula - can be tuned
         val taskScore = (completionRate * 40).toInt()
         val activityScore = ((memoriesCreated + memoriesAccessed).coerceAtMost(50) * 0.6).toInt()
         val searchScore = (searchesPerformed.coerceAtMost(30) * 0.5).toInt()

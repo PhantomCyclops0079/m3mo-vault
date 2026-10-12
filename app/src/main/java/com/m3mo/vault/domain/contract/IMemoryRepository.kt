@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.Flow
  */
 interface IMemoryRepository {
 
-    // ========== Single Item Operations ==========
 
     /**
      * Get memory by ID
@@ -75,7 +74,6 @@ interface IMemoryRepository {
      */
     suspend fun hardDelete(id: Long): AppResult<Unit, AppError>
 
-    // ========== Batch Operations ==========
 
     /**
      * Insert multiple memories
@@ -105,7 +103,6 @@ interface IMemoryRepository {
      */
     suspend fun deleteBatch(ids: List<Long>): AppResult<Int, AppError>
 
-    // ========== Query Operations ==========
 
     /**
      * Get all memories (paginated)
@@ -195,7 +192,6 @@ interface IMemoryRepository {
      */
     suspend fun getNeedingEmbedding(limit: Int = 100): AppResult<List<MemoryItem>, AppError>
 
-    // ========== Reactive Streams ==========
 
     /**
      * Observe all memories
@@ -241,7 +237,6 @@ interface IMemoryRepository {
      */
     fun observeCount(): Flow<Int>
 
-    // ========== Statistics ==========
 
     /**
      * Get total memory count
@@ -263,7 +258,6 @@ interface IMemoryRepository {
      */
     suspend fun exists(id: Long): AppResult<Boolean, AppError>
 
-    // ========== Search Support ==========
 
     /**
      * Get all searchable memories (for building search index)
@@ -300,7 +294,6 @@ interface IMemoryRepository {
      */
     suspend fun searchByKeyword(query: String, limit: Int = 20): AppResult<List<MemoryItem>, AppError>
 
-    // ========== Maintenance ==========
 
     /**
      * Permanently remove tombstoned memories older than cutoff

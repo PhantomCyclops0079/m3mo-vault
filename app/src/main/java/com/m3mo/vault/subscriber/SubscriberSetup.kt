@@ -38,7 +38,6 @@ fun setupSubscribers(
 ): SubscriberRegistry {
     val registry = SubscriberRegistry(logger)
 
-    // Order: cache consistency > search index > behavior > metrics
     registry.register(CacheInvalidationSubscriber(eventBus, logger, cache))
     registry.register(SearchIndexSubscriber(eventBus, logger))
     registry.register(BoostSubscriber(eventBus, logger, memoryBooster))

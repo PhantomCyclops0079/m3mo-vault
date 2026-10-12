@@ -21,7 +21,6 @@ interface DomainEvent {
     val timestamp: Long get() = System.currentTimeMillis()
 }
 
-// ========== Memory Lifecycle Events ==========
 
 /**
  * A new memory was created
@@ -54,10 +53,10 @@ data class MemoryDeletedEvent(
  * Reason for memory deletion
  */
 enum class DeletionReason {
-    USER_REQUEST,   // User explicitly deleted
-    DECAY,          // SmartDecay tombstoned
-    MERGE,          // Merged into another memory
-    CLEANUP         // System cleanup
+    USER_REQUEST,
+    DECAY,
+    MERGE,
+    CLEANUP
 }
 
 /**
@@ -80,11 +79,11 @@ data class MemoryAccessedEvent(
 ) : DomainEvent
 
 enum class AccessType {
-    VIEW,           // User viewed memory details
-    SEARCH_RESULT,  // Appeared in search results
-    SEARCH_CLICK,   // User clicked in search results
-    REVIEW,         // Viewed in weekly review
-    EDIT            // User edited memory
+    VIEW,
+    SEARCH_RESULT,
+    SEARCH_CLICK,
+    REVIEW,
+    EDIT
 }
 
 /**
@@ -105,7 +104,6 @@ data class TaskCompletedEvent(
     override val timestamp: Long = System.currentTimeMillis()
 ) : DomainEvent
 
-// ========== Search Events ==========
 
 /**
  * Search was performed
@@ -125,7 +123,6 @@ data class SearchResultsEvent(
     override val timestamp: Long = System.currentTimeMillis()
 ) : DomainEvent
 
-// ========== Processing Events ==========
 
 /**
  * Memory processing started
@@ -157,12 +154,11 @@ data class ProcessingFailedEvent(
 ) : DomainEvent
 
 enum class ProcessingStage {
-    NORMALIZATION,  // Stage 1: Content normalization
-    SEMANTIC,       // Stage 2: Semantic analysis & embedding
-    OPTIMIZATION    // Stage 3: SmartDecay & deduplication
+    NORMALIZATION,
+    SEMANTIC,
+    OPTIMIZATION
 }
 
-// ========== SmartDecay Events ==========
 
 /**
  * Decay optimization run started
@@ -192,14 +188,13 @@ data class WeightChangedEvent(
 ) : DomainEvent
 
 enum class WeightChangeReason {
-    DECAY,          // Regular decay cycle
-    ACCESS_BOOST,   // User accessed memory
-    PIN_BOOST,      // User pinned memory
-    CONFIDENCE,     // User rated confidence
-    MANUAL          // Manual adjustment
+    DECAY,
+    ACCESS_BOOST,
+    PIN_BOOST,
+    CONFIDENCE,
+    MANUAL
 }
 
-// ========== Voice Input Events ==========
 
 /**
  * Voice input started
@@ -238,7 +233,6 @@ data class ExtractedSegment(
     val confidence: Float
 )
 
-// ========== Weekly Review Events ==========
 
 /**
  * Weekly review generation started
@@ -259,7 +253,6 @@ data class WeeklyReviewReadyEvent(
     override val timestamp: Long = System.currentTimeMillis()
 ) : DomainEvent
 
-// ========== System Events ==========
 
 /**
  * Database migration started

@@ -68,7 +68,7 @@ class M3moWorkerFactory(
                 clock = clock,
                 logger = logger
             )
-            else -> null // Fall through to default factory
+            else -> null
         }
     }
 }

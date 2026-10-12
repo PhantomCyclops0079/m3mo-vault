@@ -87,23 +87,17 @@ class SnowflakeIdGenerator(
     }
 
     companion object {
-        // Custom epoch: Jan 1, 2024 00:00:00 UTC
-        // Gives us ~69 years before overflow
         private const val CUSTOM_EPOCH = 1704067200000L
 
-        // Bit allocation
         private const val MACHINE_ID_BITS = 10
         private const val SEQUENCE_BITS = 12
 
-        // Max values
         private const val MAX_MACHINE_ID = (1L shl MACHINE_ID_BITS) - 1
         private const val MAX_SEQUENCE = (1L shl SEQUENCE_BITS) - 1
 
-        // Bit shifts
         private const val MACHINE_ID_SHIFT = SEQUENCE_BITS
         private const val TIMESTAMP_SHIFT = SEQUENCE_BITS + MACHINE_ID_BITS
 
-        // Clock backward thresholds
         private const val MODERATE_BACKWARD_MS = 5000L
 
         /**
@@ -137,7 +131,6 @@ class SnowflakeIdGenerator(
             "Machine ID must be between 0 and $MAX_MACHINE_ID"
         }
 
-        // Load persisted timestamp to detect restart-related clock backward
         loadLastTimestamp()
 
         logger.i(
@@ -151,7 +144,6 @@ class SnowflakeIdGenerator(
     override fun nextId(): Long {
         var currentTs = currentTimestamp()
 
-        // Clock moved backwards detection
         if (currentTs < lastTimestamp) {
             val backwardMs = lastTimestamp - currentTs
 
@@ -161,13 +153,11 @@ class SnowflakeIdGenerator(
             )
 
             when {
-                // Tolerable: Wait for clock to catch up
                 backwardMs <= maxClockBackwardMs -> {
                     logger.i("SnowflakeId", "Waiting ${backwardMs}ms for clock to catch up")
                     Thread.sleep(backwardMs)
                     currentTs = currentTimestamp()
 
-                    // Verify clock caught up
                     if (currentTs < lastTimestamp) {
                         throw ClockBackwardException(
                             "Clock still backwards after waiting",
@@ -176,7 +166,6 @@ class SnowflakeIdGenerator(
                     }
                 }
 
-                // Moderate: Use sequence compensation
                 backwardMs <= MODERATE_BACKWARD_MS -> {
                     logger.w(
                         "SnowflakeId",
@@ -185,7 +174,6 @@ class SnowflakeIdGenerator(
                     return generateIdWithSequenceCompensation()
                 }
 
-                // Severe: Throw exception
                 else -> {
                     logger.e(
                         "SnowflakeId",
@@ -200,22 +188,17 @@ class SnowflakeIdGenerator(
             }
         }
 
-        // Normal flow: same millisecond or newer
         if (currentTs == lastTimestamp) {
-            // Same millisecond - increment sequence
             val seq = sequence.incrementAndGet() and MAX_SEQUENCE
             if (seq == 0L) {
-                // Sequence overflow - wait for next millisecond
                 currentTs = waitNextMillis(lastTimestamp)
             }
         } else {
-            // New millisecond - reset sequence
             sequence.set(0)
         }
 
         lastTimestamp = currentTs
 
-        // Async persist timestamp (non-blocking)
         persistTimestamp(currentTs)
 
         return composeId(currentTs)
@@ -231,7 +214,6 @@ class SnowflakeIdGenerator(
         val seq = sequence.incrementAndGet() and MAX_SEQUENCE
 
         if (seq == 0L) {
-            // Sequence exhausted - must wait for clock
             logger.w("SnowflakeId", "Sequence exhausted during compensation, waiting for clock")
             val currentTs = waitNextMillis(lastTimestamp)
             lastTimestamp = currentTs
@@ -239,8 +221,6 @@ class SnowflakeIdGenerator(
             return composeId(currentTs)
         }
 
-        // Use old timestamp with new sequence
-        // Note: ID will appear older than reality, but still unique
         logger.d("SnowflakeId", "Generated compensated ID with seq=$seq")
         return composeId(lastTimestamp)
     }
@@ -260,7 +240,6 @@ class SnowflakeIdGenerator(
             ts = currentTimestamp()
             iterations++
 
-            // Safety: Prevent infinite loop
             if (iterations > 10000) {
                 logger.e("SnowflakeId", "Stuck waiting for next millisecond, iterations=$iterations")
                 throw IllegalStateException("Failed to wait for next millisecond after $iterations attempts")
@@ -303,7 +282,6 @@ class SnowflakeIdGenerator(
                     lastTimestamp = persisted
                     logger.i("SnowflakeId", "Loaded persisted timestamp: $persisted")
 
-                    // Check if current time is before persisted time
                     val currentTs = currentTimestamp()
                     if (currentTs < persisted) {
                         val backwardMs = persisted - currentTs
@@ -369,7 +347,6 @@ data class SnowflakeStats(
 class UuidIdGenerator : IdGenerator {
 
     override fun nextId(): Long {
-        // Use most significant bits of UUID (good enough for uniqueness)
         return UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE
     }
 
@@ -421,7 +398,6 @@ class PrefixedIdGenerator(
     override fun nextIdString(): String = "${prefix}_${delegate.nextId()}"
 }
 
-// ========== Convenience Functions ==========
 
 /**
  * Generate a memory fact ID

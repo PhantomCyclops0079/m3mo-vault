@@ -45,25 +45,22 @@ class SearchMemoriesUseCase(
 
         val startTime = clock.nowMillis()
 
-        // Get searchable memories
         val candidatesResult = repository.getByStates(
             states = if (query.includeArchived) {
                 ProcessingState.searchable()
             } else {
                 setOf(ProcessingState.STORED, ProcessingState.OPTIMIZED)
             },
-            limit = 1000 // Max candidates for search
+            limit = 1000
         )
 
         return candidatesResult.suspendFlatMap { candidates ->
-            // Filter by type if specified
             val filtered = if (query.types != null) {
                 candidates.filter { it.type in query.types }
             } else {
                 candidates
             }
 
-            // Filter by tags if specified
             val tagFiltered = if (query.tags != null) {
                 filtered.filter { memory ->
                     memory.tags.any { it in query.tags }
@@ -72,11 +69,9 @@ class SearchMemoriesUseCase(
                 filtered
             }
 
-            // Execute search
             val results = semanticMatcher.search(query, tagFiltered)
             val searchTimeMs = clock.nowMillis() - startTime
 
-            // Publish event
             eventBus.publish(
                 SearchPerformedEvent(
                     query = query.text,
@@ -85,7 +80,6 @@ class SearchMemoriesUseCase(
                 )
             )
 
-            // Mark top results as accessed
             results.results.take(5).forEach { result ->
                 eventBus.publish(
                     MemoryAccessedEvent(

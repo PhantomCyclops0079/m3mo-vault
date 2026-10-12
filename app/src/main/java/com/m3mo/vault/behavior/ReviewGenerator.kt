@@ -33,7 +33,7 @@ class ReviewGenerator(
         private const val MAX_ITEMS_PER_SECTION = 10
         private const val DAYS_IN_WEEK = 7
         private const val MS_PER_DAY = 24 * 60 * 60 * 1000L
-        private const val DECAY_THRESHOLD = 6 // Weight below this is "decayed"
+        private const val DECAY_THRESHOLD = 6
     }
 
     suspend fun generateWeeklyReview(): AppResult<WeeklyReview, AppError> {
@@ -52,12 +52,10 @@ class ReviewGenerator(
         startMs: Long,
         endMs: Long
     ): AppResult<WeeklyReview, AppError> =
-        // Run repository queries off the main thread.
         withContext(Dispatchers.IO) {
             val startTime = clock.nowMillis()
 
             try {
-                // Check the configured 30 MB resource budget.
                 if (!governor.canProceed(ResourceCost(memoryMb = 30))) {
                     logger.w(LogTags.REVIEW, "Review generation skipped: Insufficient resources")
                     return@withContext AppResult.failure(
@@ -69,7 +67,6 @@ class ReviewGenerator(
 
                 logger.d(LogTags.REVIEW, "Generating review for period ${formatDate(startMs)} to ${formatDate(endMs)}")
 
-                // Fetch records in the requested time range.
                 val memoriesResult = repository.getByTimeRange(startMs, endMs)
                 val memories = when (memoriesResult) {
                     is AppResult.Success -> memoriesResult.value
@@ -80,7 +77,6 @@ class ReviewGenerator(
                     return@withContext AppResult.success(WeeklyReview.empty(startMs, endMs))
                 }
 
-                // Group records by type.
                 val completedTasks = memories
                     .filter { it.type == MemoryType.TASK && it.isCompleted }
                     .sortedByDescending { it.updatedAt }

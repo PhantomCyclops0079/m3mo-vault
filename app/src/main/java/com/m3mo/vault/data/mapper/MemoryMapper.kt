@@ -20,7 +20,6 @@ import org.json.JSONException
  */
 object MemoryMapper {
 
-    // ========== Entity -> Domain ==========
 
     /**
      * Convert MemoryEntity to MemoryItem
@@ -55,7 +54,6 @@ object MemoryMapper {
         return entities.map { toDomain(it) }
     }
 
-    // ========== Domain -> Entity ==========
 
     /**
      * Convert MemoryItem to MemoryEntity
@@ -90,13 +88,12 @@ object MemoryMapper {
         return items.map { toEntity(it) }
     }
 
-    // ========== Enum Parsing (String -> Enum) ==========
 
     private fun parseMemoryType(value: String): MemoryType {
         return try {
             MemoryType.valueOf(value)
         } catch (e: IllegalArgumentException) {
-            MemoryType.FACT // Default fallback
+            MemoryType.FACT
         }
     }
 
@@ -104,7 +101,7 @@ object MemoryMapper {
         return try {
             ProcessingState.valueOf(value)
         } catch (e: IllegalArgumentException) {
-            ProcessingState.NEW // Default fallback
+            ProcessingState.NEW
         }
     }
 
@@ -112,11 +109,10 @@ object MemoryMapper {
         return try {
             MemorySource.valueOf(value)
         } catch (e: IllegalArgumentException) {
-            MemorySource.TEXT // Default fallback
+            MemorySource.TEXT
         }
     }
 
-    // ========== Tags Serialization ==========
 
     /**
      * Parse tags from JSON string
@@ -148,7 +144,6 @@ object MemoryMapper {
     }
 }
 
-// ========== Extension Functions ==========
 
 /**
  * Extension to convert entity to domain

@@ -219,7 +219,6 @@ inline fun Logger.e(tag: String, throwable: Throwable? = null, message: () -> St
     if (isLoggable(tag, LogLevel.ERROR)) e(tag, message(), throwable)
 }
 
-// ========== Standard Tags ==========
 
 /**
  * Predefined tags for consistent logging across the app

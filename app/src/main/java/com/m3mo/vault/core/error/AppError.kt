@@ -48,7 +48,6 @@ sealed class AppError {
      */
     open val recoveryHint: String? = null
 
-    // ========== Database Errors ==========
 
     sealed class Database : AppError() {
         override val code: String get() = "DB_${this::class.simpleName?.uppercase()}"
@@ -157,7 +156,6 @@ sealed class AppError {
         }
     }
 
-    // ========== IO/File Errors ==========
 
     sealed class IO : AppError() {
         override val code: String get() = "IO_${this::class.simpleName?.uppercase()}"
@@ -205,7 +203,6 @@ sealed class AppError {
         }
     }
 
-    // ========== Validation Errors ==========
 
     sealed class Validation : AppError() {
         override val code: String get() = "VAL_${this::class.simpleName?.uppercase()}"
@@ -254,7 +251,6 @@ sealed class AppError {
         }
     }
 
-    // ========== Business Logic Errors ==========
 
     sealed class Business : AppError() {
         override val code: String get() = "BIZ_${this::class.simpleName?.uppercase()}"
@@ -309,7 +305,6 @@ sealed class AppError {
         }
     }
 
-    // ========== Resource/System Errors ==========
 
     sealed class Resource : AppError() {
         override val code: String get() = "RES_${this::class.simpleName?.uppercase()}"
@@ -353,7 +348,6 @@ sealed class AppError {
         }
     }
 
-    // ========== Internal/System Errors ==========
 
     sealed class Internal : AppError() {
         override val code: String get() = "INTERNAL_${this::class.simpleName?.uppercase()}"
@@ -385,7 +379,6 @@ sealed class AppError {
         }
     }
 
-    // ========== Unknown/Generic Errors ==========
 
     data class Unknown(
         override val technicalMessage: String,

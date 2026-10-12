@@ -145,21 +145,21 @@ data class ResourceState(
  * Thermal throttling state
  */
 enum class ThermalState {
-    NOMINAL,    // Normal operation
-    FAIR,       // Slight throttling
-    SERIOUS,    // Significant throttling
-    CRITICAL    // Emergency - stop heavy operations
+    NOMINAL,
+    FAIR,
+    SERIOUS,
+    CRITICAL
 }
 
 /**
  * Overall resource pressure level
  */
 enum class PressureLevel {
-    LOW,        // Plenty of resources
-    NORMAL,     // Normal operation
-    ELEVATED,   // Should reduce batch sizes
-    HIGH,       // Should defer non-essential operations
-    CRITICAL    // Emergency mode
+    LOW,
+    NORMAL,
+    ELEVATED,
+    HIGH,
+    CRITICAL
 }
 
 /**
@@ -189,15 +189,15 @@ data class ResourceBudget(
  * Types of operations that need resource governance
  */
 enum class OperationType {
-    DECAY_BATCH,        // SmartDecay processing
-    SEMANTIC_SEARCH,    // Embedding-based search
-    EMBEDDING_GEN,      // Generate embeddings
-    VOICE_TRANSCRIBE,   // Voice to text
-    DATABASE_QUERY,     // Large database queries
-    INDEX_BUILD,        // Build search index
-    WEEKLY_REVIEW,      // Generate weekly review
-    EXPORT,             // Export data
-    IMPORT              // Import data
+    DECAY_BATCH,
+    SEMANTIC_SEARCH,
+    EMBEDDING_GEN,
+    VOICE_TRANSCRIBE,
+    DATABASE_QUERY,
+    INDEX_BUILD,
+    WEEKLY_REVIEW,
+    EXPORT,
+    IMPORT
 }
 
 /**
