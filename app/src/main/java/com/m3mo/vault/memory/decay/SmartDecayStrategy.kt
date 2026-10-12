@@ -16,47 +16,19 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * SmartDecayStrategy - US Provisional Patent #63/942,399
+ * Calculates decay for unpinned records in STORED or OPTIMIZED state whose
+ * weight is above the configured minimum.
  *
- * The SmartDecay algorithm achieves intelligent 12x weight differentiation
- * through a 7-factor analysis system designed for resource-constrained
- * mobile devices.
+ * Factor contributions are added, truncated toward zero, and clamped at zero:
+ * effectiveDecay = max(0, sumOfContributions.toInt())
+ * newWeight = clamp(oldWeight - effectiveDecay, minWeight, maxWeight)
  *
- * ## Algorithm Overview
+ * The grace period cancels the base contribution. Recency and size can add
+ * decay; frequency and confidence can reduce it. An unrated record uses
+ * confidence 3. Pin bypasses the calculation entirely.
  *
- * The algorithm calculates the effective decay for each memory using:
- * ```
- * effectiveDecay = baseDecay × gracePeriodMultiplier × recencyMultiplier
- *                  - frequencyBonus - confidenceBonus + sizePenalty
- *
- * if (isPinned) effectiveDecay = 0
- *
- * newWeight = clamp(originalWeight - effectiveDecay, MIN_WEIGHT, MAX_WEIGHT)
- * ```
- *
- * ## The 7 Factors
- *
- * 1. **Base Decay**: Foundation decay rate per optimization cycle
- * 2. **Grace Period**: New memories protected for N days (default: 7)
- * 3. **Recency Penalty**: Older memories decay faster (multiplier: 1.0-2.0)
- * 4. **Frequency Bonus**: High-access memories decay slower (0-2 reduction)
- * 5. **Confidence Bonus**: User-rated importance reduces decay (0-2 reduction)
- * 6. **Size Penalty**: Large content decays faster for resource management
- * 7. **Pin Protection**: Absolute protection, no decay
- *
- * ## Validated Test Results (Patent Evidence)
- *
- * Ablation study (synthetic, 3500 memories, 10 cycles):
- * - HIGH_RECENT: 12→12 (fully preserved by frequency + recency + confidence)
- * - LOW_OLD: 5→1 (aggressive decay, recency penalty + no bonuses)
- * - Differentiation ratio: 12x (SmartDecay) vs 2x (naive linear)
- *
- * Ablation study (randomized, 3000 memories, 10 cycles):
- * - Top 10% avg: 11.56, Bottom 10% avg: 1.00
- * - Differentiation ratio: 11.6x (SmartDecay) vs 4.7x (naive)
- * - SmartDecay preserved 50% of memories vs 5% for naive
- *
- * Scale: 10,500 memories processed in 8.16ms (0.78µs/memory)
+ * For changed weights, tombstoning takes precedence over archiving.
+ * This strategy returns a recommended action; callers persist the result.
  *
  * @see IDecayStrategy
  * @see DecayConfig
@@ -201,7 +173,7 @@ class SmartDecayStrategy(
 
     /**
      * Factor 2: Grace Period
-     * New memories are protected from decay for the grace period
+     * Cancel the base contribution while a record is in its grace period.
      */
     private fun calculateGracePeriodFactor(ageInDays: Long): FactorValue {
         val inGracePeriod = ageInDays < config.gracePeriodDays
@@ -218,10 +190,10 @@ class SmartDecayStrategy(
      * Factor 3: Recency Penalty
      * Memories not accessed for a long time decay faster
      *
-     * Formula:
-     * - 0-14 days: no penalty
-     * - 15-30 days: 1.5x multiplier
-     * - 31+ days: 2.0x multiplier
+     * With the default configuration:
+     * - Fewer than 14 days: no contribution
+     * - 14-27 days: add 1 to calculated decay
+     * - 28 or more days: add 2 to calculated decay
      */
     private fun calculateRecencyPenaltyFactor(daysSinceAccess: Long): FactorValue {
         val penalty = when {
@@ -320,7 +292,7 @@ class SmartDecayStrategy(
     private fun calculateEffectiveDecay(factors: DecayFactors): Int {
         val totalContribution = factors.totalContribution
         
-        // Round to nearest integer, minimum 0
+        // Truncate toward zero, then clamp at zero.
         return max(0, totalContribution.toInt())
     }
 

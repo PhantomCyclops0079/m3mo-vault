@@ -8,7 +8,7 @@ import androidx.room.TypeConverters
 import com.m3mo.vault.data.dao.MemoryDao
 import com.m3mo.vault.data.dao.SettingsDao
 import com.m3mo.vault.data.entity.MemoryEntity
-import com.m3mo.vault.data.entity.MemoryFtsEntity // ✅ 引入 FTS Entity
+import com.m3mo.vault.data.entity.MemoryFtsEntity
 import com.m3mo.vault.data.entity.SettingsEntity
 
 /**
@@ -21,14 +21,14 @@ import com.m3mo.vault.data.entity.SettingsEntity
  *
  * Features:
  * - WAL mode for better concurrent access
- * - Auto migrations when possible
+ * - Registered migrations, with destructive fallback for missing paths
  * - Export schema for version control
  */
 @Database(
     entities = [
         MemoryEntity::class,
         SettingsEntity::class,
-        MemoryFtsEntity::class // ✅ 修复点 1: 必须在这里注册 FTS 表！
+        MemoryFtsEntity::class
     ],
     version = AppDatabase.VERSION,
     exportSchema = true
@@ -40,7 +40,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun settingsDao(): SettingsDao
 
     companion object {
-        // ✅ 修复点 2: 版本升级 (1 -> 2)，触发数据库重建
         const val VERSION = 2
         const val DATABASE_NAME = "m3mo_vault.db"
 
@@ -70,8 +69,8 @@ abstract class AppDatabase : RoomDatabase() {
                 // Add migrations
                 .addMigrations(*DatabaseMigrations.ALL_MIGRATIONS)
                 // Fallback to destructive migration if no migration path
-                // ⚠️ 重要：因为我们改了 Version 但没写具体 Migration，
-                // Room 会直接清空数据库重建。在开发阶段这是 OK 的。
+                // No migrations are registered in this snapshot. A missing migration
+                // path can trigger destructive recreation and data loss.
                 .fallbackToDestructiveMigration()
                 // Build
                 .build()

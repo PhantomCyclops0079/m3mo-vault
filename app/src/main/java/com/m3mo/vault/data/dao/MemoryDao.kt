@@ -410,10 +410,8 @@ interface MemoryDao {
     /**
      * Search using FTS4 full-text index
      * 
-     * This is 100x faster than Kotlin string matching because:
-     * - Uses inverted index
-     * - Written in C
-     * - Doesn't load all content into RAM
+     * Uses SQLite's inverted index to select matching row IDs without
+     * loading every record into Kotlin for string matching.
      *
      * @param query FTS query string (supports AND, OR, prefix*)
      * @return List of matching memory IDs

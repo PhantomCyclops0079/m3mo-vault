@@ -271,7 +271,7 @@ interface IMemoryRepository {
     suspend fun getSearchable(): AppResult<List<MemoryItem>, AppError>
 
     /**
-     * Full-text search using SQLite FTS4 (100x faster than string matching)
+     * Full-text search using the SQLite FTS4 index
      *
      * @param query Search query (supports AND, OR, prefix*)
      * @param limit Maximum results

@@ -69,7 +69,7 @@ data class DecayResult(
 /**
  * DecayFactors - The 7 factors of SmartDecay algorithm
  *
- * This is the core patent-pending innovation:
+ * Named inputs to the decay calculation:
  * 1. Base decay rate
  * 2. Grace period protection
  * 3. Recency penalty

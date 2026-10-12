@@ -15,44 +15,16 @@ import com.m3mo.vault.domain.model.SearchResults
 import kotlinx.coroutines.CancellationException
 
 /**
- * SearchEngine - High-Performance Hybrid Search
+ * Coordinates keyword, TF-IDF, and hybrid search.
  *
- * Uses SQLite FTS4 for keyword search (100x faster than memory scan).
- * Combines with semantic search for optimal results.
+ * Hybrid search first selects keyword candidates through KeywordMatcher, then
+ * computes TF-IDF scores for those candidates. Reranking cannot recover records
+ * excluded by candidate selection.
  *
- * ## Search Strategy (Optimized)
+ * HybridScore = (KeywordScore * 0.4) + (SemanticScore * 0.6)
  *
- * ```
- * 1. FTS Keyword Match (fast, uses SQLite index)
- *    └── O(log n) via inverted index
- *    └── No RAM overhead
- *
- * 2. Semantic Match (on FTS results only)
- *    └── Only processes FTS hits
- *    └── Avoids full dataset scan
- *
- * 3. Merge & Rank
- *    └── Weighted scoring
- * ```
- *
- * ## Performance
- *
- * | Dataset | Old (Memory Scan) | New (FTS) |
- * |---------|-------------------|-----------|
- * | 1K memories | 50-100ms | 5-10ms |
- * | 10K memories | 500-2000ms | 10-20ms |
- * | 100K memories | OOM crash | 20-50ms |
- *
- * ## Scoring Formula
- *
- * ```
- * HybridScore = (KeywordScore × 0.4) + (SemanticScore × 0.6)
- *
- * With bonuses:
- * - +0.1 for recent memories (last 7 days)
- * - +0.1 for high-weight memories (≥12)
- * - +0.05 for pinned memories
- * ```
+ * The hybrid path adds bonuses for recent records, high weights, and Pin.
+ * Query filters control archived records, types, and tags.
  */
 class SearchEngine(
     private val repository: IMemoryRepository,

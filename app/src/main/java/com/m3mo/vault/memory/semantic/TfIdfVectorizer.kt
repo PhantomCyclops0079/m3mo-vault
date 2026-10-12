@@ -9,10 +9,7 @@ import kotlin.math.sqrt
  * TfIdfVectorizer - TF-IDF Text Vectorization Engine
  *
  * Implements Term Frequency-Inverse Document Frequency (TF-IDF)
- * for semantic text representation. Optimized for:
- * - Low memory footprint (~30MB for 10K documents)
- * - Fast computation on mobile devices
- * - 98.8% clustering accuracy (patent evidence)
+ * for sparse text representation and cosine-similarity comparisons.
  *
  * ## Algorithm
  *
@@ -302,7 +299,7 @@ class TfIdfVectorizer(
         val n = documentCount.toFloat()
 
         for ((term, df) in documentFrequency) {
-            // Standard IDF: log(N/df) + 1 (smoothed)
+            // IDF: natural log of the document-count ratio, plus 1.
             idfScores[term] = ln(n / df) + 1f
         }
     }

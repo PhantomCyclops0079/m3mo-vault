@@ -7,46 +7,8 @@ import com.m3mo.vault.domain.model.SearchResult
 import com.m3mo.vault.memory.normalize.DefaultNormalizer
 
 /**
- * KeywordMatcher - High-Performance Keyword Search
- *
- * Uses SQLite FTS4 for primary search (100x faster than string matching).
- * Falls back to in-memory fuzzy search only when needed.
- *
- * ## Search Strategy
- *
- * ```
- * 1. FTS Exact Match (fast, O(log n))
- *    └── SQLite inverted index
- *
- * 2. FTS Prefix Match (fast, O(log n))
- *    └── For autocomplete scenarios
- *
- * 3. Fuzzy Match (slow, O(n×m))
- *    └── Only if FTS returns < 3 results
- *    └── Limited to 500 most recent memories
- * ```
- *
- * ## Why FTS is Critical
- *
- * | Method | 10K memories | Memory Usage |
- * |--------|-------------|--------------|
- * | Kotlin loop | 500-2000ms | High (all in RAM) |
- * | FTS4 | 5-20ms | Low (index only) |
- *
- * ## Usage
- *
- * ```kotlin
- * val matcher = KeywordMatcher(repository, normalizer)
- *
- * // Primary search (uses FTS)
- * val results = matcher.search("meeting notes", limit = 20)
- *
- * // Prefix search (autocomplete)
- * val results = matcher.searchPrefix("meet", limit = 10)
- *
- * // Fuzzy search (typo tolerant, limited scope)
- * val results = matcher.searchFuzzy("meating", limit = 10)
- * ```
+ * Provides indexed keyword and prefix searches through the repository.
+ * In-memory fuzzy matching supplies a fallback when indexed matches are insufficient.
  */
 class KeywordMatcher(
     private val repository: IMemoryRepository,

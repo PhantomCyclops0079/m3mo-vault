@@ -25,7 +25,7 @@ import java.util.Locale
  */
 class ReviewGenerator(
     private val repository: IMemoryRepository,
-    private val governor: IResourceGovernor, // ⚡ 资源守门人
+    private val governor: IResourceGovernor,
     private val clock: Clock,
     private val logger: Logger
 ) {
@@ -52,12 +52,12 @@ class ReviewGenerator(
         startMs: Long,
         endMs: Long
     ): AppResult<WeeklyReview, AppError> =
-        // ⚡ 强制切换到 IO 线程处理数据库查询，避免阻塞主线程
+        // Run repository queries off the main thread.
         withContext(Dispatchers.IO) {
             val startTime = clock.nowMillis()
 
             try {
-                // ⚡ 资源检查：周报生成大概需要 30MB 的内存预算
+                // Check the configured 30 MB resource budget.
                 if (!governor.canProceed(ResourceCost(memoryMb = 30))) {
                     logger.w(LogTags.REVIEW, "Review generation skipped: Insufficient resources")
                     return@withContext AppResult.failure(
@@ -69,7 +69,7 @@ class ReviewGenerator(
 
                 logger.d(LogTags.REVIEW, "Generating review for period ${formatDate(startMs)} to ${formatDate(endMs)}")
 
-                // 获取指定时间范围内的记忆
+                // Fetch records in the requested time range.
                 val memoriesResult = repository.getByTimeRange(startMs, endMs)
                 val memories = when (memoriesResult) {
                     is AppResult.Success -> memoriesResult.value
@@ -80,7 +80,7 @@ class ReviewGenerator(
                     return@withContext AppResult.success(WeeklyReview.empty(startMs, endMs))
                 }
 
-                // 细分记忆类别
+                // Group records by type.
                 val completedTasks = memories
                     .filter { it.type == MemoryType.TASK && it.isCompleted }
                     .sortedByDescending { it.updatedAt }

@@ -43,10 +43,10 @@ android {
         buildConfig = true
     }
 
-    // 配置测试选项（可选但推荐）
+    // Configure unit-test options.
     testOptions {
         unitTests {
-            isIncludeAndroidResources = true // Robolectric 需要
+            isIncludeAndroidResources = true // Required by Robolectric.
             isReturnDefaultValues = true
         }
     }
@@ -59,7 +59,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.9.3")
 
     // ========== Compose ==========
-    // Compose BOM (管理所有 Compose 版本)
+    // Compose BOM manages Compose dependency versions.
     implementation(platform("androidx.compose:compose-bom:2024.11.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
@@ -87,8 +87,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
 
-    // ========== JSON (新增 - 关键!) ==========
-    // 注意：虽然 Android SDK 包含 org.json，但单元测试需要纯 Java 版本
+    // ========== JSON ==========
+    // Unit tests need a JVM JSON implementation instead of Android's stub.
     implementation("org.json:json:20230227")
 
     // ========== Unit Testing ==========
@@ -97,19 +97,19 @@ dependencies {
     // Kotlin Test
     testImplementation("org.jetbrains.kotlin:kotlin-test")
 
-    // Coroutines Test (新增)
+    // Coroutines test utilities
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 
-    // JSON for Unit Tests (新增 - 关键！没有这个会报 Stub! 错误)
+    // JVM JSON support for unit tests
     testImplementation("org.json:json:20230227")
 
-    // Robolectric (新增 - 推荐用于测试 Android API)
+    // Robolectric for tests that use Android APIs
     testImplementation("org.robolectric:robolectric:4.11.1")
 
-    // MockK (新增 - 推荐用于 mock 测试)
+    // MockK test doubles
     testImplementation("io.mockk:mockk:1.13.8")
 
-    // Truth (新增 - 推荐用于更好的断言)
+    // Truth assertions
     testImplementation("com.google.truth:truth:1.1.5")
 
     // Room Testing
@@ -121,7 +121,7 @@ dependencies {
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.11.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 
-    // Coroutines Test for Android Tests (新增)
+    // Coroutines utilities for instrumented tests
     androidTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
 
     // ========== Debug Dependencies ==========

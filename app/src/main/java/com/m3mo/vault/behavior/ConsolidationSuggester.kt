@@ -21,7 +21,7 @@ import kotlinx.coroutines.withContext
 class ConsolidationSuggester(
     private val repository: IMemoryRepository,
     private val semanticMatcher: ISemanticMatcher,
-    private val governor: IResourceGovernor, // ⚡ 资源守门人
+    private val governor: IResourceGovernor,
     private val clock: Clock,
     private val logger: Logger
 ) {
@@ -34,10 +34,10 @@ class ConsolidationSuggester(
     }
 
     suspend fun getSuggestions(limit: Int = MAX_SUGGESTIONS): AppResult<List<ConsolidationSuggestion>, AppError> =
-        // ⚡ 强制切换到计算线程，防止 $O(N^2)$ 计算卡死主线程
+        // Run pairwise comparisons off the main thread.
         withContext(Dispatchers.Default) {
             try {
-                // ⚡ 资源检查：需要大约 50MB 预算
+                // Check the configured 50 MB resource budget.
                 if (!governor.canProceed(ResourceCost(memoryMb = 50))) {
                     logger.w(LogTags.SEARCH, "Consolidation skipped: Insufficient resources")
                     return@withContext AppResult.failure(
@@ -126,7 +126,7 @@ class ConsolidationSuggester(
 
         if (candidates.isEmpty()) return AppResult.success(emptyList())
 
-        // 巧妙借用现有对象结构创建对比对象
+        // Wrap the input text in a temporary record for similarity matching.
         val tempMemory = candidates.first().copy(
             id = -1,
             content = content,
