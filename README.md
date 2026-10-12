@@ -3,12 +3,12 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0-blue.svg)](https://kotlinlang.org)
 [![Android](https://img.shields.io/badge/Min%20SDK-26-green.svg)](https://developer.android.com)
 [![Status](https://img.shields.io/badge/Status-MVP-purple.svg)]()
-[![Patent](https://img.shields.io/badge/Patent-Pending-orange.svg)]()
 
-An offline-first Android application for personal memory management. Records facts, events, and tasks, 
-then uses a multi-factor decay algorithm to automatically manage what stays relevant and what fades — entirely on-device, no cloud, no network.
+An offline Android prototype for storing personal facts, episodes, and tasks. It combines local SQLite storage, FTS4 search, TF-IDF ranking, and a rule-based maintenance algorithm called SmartDecay.
 
-**Patent Pending:** US Provisional Application #63/942,399 — *"Offline Memory Lifecycle Management System and Method for Mobile AI Software"* (Filed Dec 2025)
+The app has no cloud-sync service. Android system backup is enabled in this build.
+
+**Design history:** U.S. provisional application 63/942,399 — *"Offline Memory Lifecycle Management System and Method for Mobile AI Software"* — was submitted on December 16, 2025. It is not a granted patent. I do not plan to pursue a non-provisional application.
 **[Demo Video](https://youtube.com/shorts/C30H1X8U_PE?si=_8SAzgQWdnWmPdaQ)**
 ---
 
@@ -16,13 +16,15 @@ then uses a multi-factor decay algorithm to automatically manage what stays rele
 
 You enter short text memories (facts, episodes, tasks). 
 
-The app stores them locally in SQLite and runs a daily background process that adjusts each memory's weight based on 7 factors: how recently you accessed it, how often, whether you rated it important, whether you pinned it, how old it is, how large it is, and a base decay rate. High-value memories retain weight. Neglected memories decay toward archival.
+The app stores entries locally in SQLite. A background worker is scheduled daily to apply SmartDecay to eligible records: unpinned entries in STORED or OPTIMIZED state with weight above 1. Device constraints and batch limits affect when records are processed. New entries start in NEW, outside that eligible set.
+
+**SmartDecay** calculates weight changes using record age, access history, ratings, content length, and configurable decay settings. Pin bypasses decay. Given the same inputs, configuration, and processing time, the calculation is deterministic and returns a factor breakdown.
 
 The algorithm is called **SmartDecay**. It's deterministic, explainable (every weight change has a traceable factor breakdown), and runs in under 9ms for 10,000+ memories.
 
 ## What It Doesn't Do (Yet)
 
-- No LLM / AI model integration (architecture supports it via pluggable interfaces, but current version uses TF-IDF for semantic matching and rule-based decay)
+- No language-model integration; retrieval currently uses FTS4 and TF-IDF, with rule-based maintenance
 - No voice input
 - No cloud sync
 - English only
@@ -53,47 +55,35 @@ ServiceLocator (7-Layer Manual DI)
     └── Workers (WorkManager: Daily Decay, Weekly Review, Cleanup)
 ```
 
-**Why ServiceLocator instead of Hilt:** Faster builds (no annotation processing), errors traceable to exact line numbers, 
-and the file itself serves as the system's architecture map. One file to understand the entire dependency graph.
+**Dependency wiring:** Dependencies are wired explicitly in ServiceLocator, which provides a central place to inspect the app's dependency graph.
 
 ## SmartDecay Algorithm
 
-Each daily cycle, every eligible memory gets a weight adjustment based on:
+Under the default configuration, positive contributions increase calculated decay and negative contributions reduce it.
 
-| # | Factor           | Effect                                         |
-|---|------------------|------------------------------------------------|
-| 1 | Base Decay       | -1 weight per cycle (configurable)             |
-| 2 | Grace Period     | New memories (< 7 days) skip decay entirely    |
-| 3 | Recency Penalty  | Not accessed > 14 days → up to 2x faster decay |
-| 4 | Frequency Bonus  | Accessed > 5 times → up to 2 weight protection |
-| 5 | Confidence Bonus | User rating 4-5 → up to 2 weight protection    |
-| 6 | Size Penalty     | Content > 1000 chars → up to 1 extra decay     |
-| 7 | Pin Protection   | Pinned → zero decay, always                    |
+| # | Factor | Default behavior |
+|---|---|---|
+| 1 | Base Decay | Add 1 per processing cycle. |
+| 2 | Grace Period | Subtract 1 while the record is less than 7 days old, cancelling the base contribution. |
+| 3 | Recency Penalty | Add 1 after 14 days without access, or 2 after 28 days. |
+| 4 | Frequency Bonus | Subtract 1 at 5–9 recorded accesses, or 2 at 10 or more. |
+| 5 | Confidence Bonus | Ratings 3, 4, and 5 subtract 0.5, 1, and 2 respectively. Ratings 1–2 provide no reduction; an unrated record defaults to 3. |
+| 6 | Size Penalty | Add 0.5 for 1,001–5,000 characters, or 1 above 5,000. |
+| 7 | Pin Protection | Skip decay entirely. |
 
-Weight range: 1 (minimum, candidate for archival) to 16 (maximum).
+Contributions are summed, truncated toward zero, and clamped at zero before being subtracted from the current weight.
 
-### Validated Performance
+Weights start at 8 and remain within 1–16. When a changed weight reaches 1, the rule recommends tombstoning; otherwise, reaching 2 recommends archiving. Archived records leave the daily decay query, so archiving does not automatically lead to deletion.
 
-Tested with ablation study (SmartDecay vs. naive linear decay) on both synthetic and randomized datasets:
+Pin protects against archiving or tombstoning through this decay path, but does not prevent manual deletion.
 
-| Test                    | Dataset                                              | Result                                                 |
-|------------------------ |------------------------------------------------------|-----------------------------------------------------   |
-| Ablation (synthetic)    | 3,500 memories, 7 profiles, 10 cycles                | **12x** differentiation (SmartDecay) vs **2x** (naive) |
-| Ablation (randomized)   | 3,000 memories, uniform random attributes, 10 cycles | **11.6x** differentiation vs **4.7x** (naive)          |
-| Scale                   | 10,500 memories                                      | 8.16ms total, **0.78µs/memory**                        |
-| Factor isolation        | 6 active factors tested independently                | All 6 produce measurably different outcomes            |
-| 30-day progression      | 5 profiles tracked over 30 daily cycles              | 5 distinct decay curves from same weight range         |
+### Experimental Evidence
 
-SmartDecay preserved 50% of randomized memories' weights unchanged (vs. 5% for naive), while still aggressively decaying low-value entries. Full test code in `app/src/test/java/com/m3mo/vault/test/patent/`.
+A separate synthetic experiment summary reports weight outcomes under configured scenarios. The experiment harness is not included in this public snapshot. These results do not establish retrieval quality or Android device performance.
 
 ## Search
 
-Hybrid search combining SQLite FTS4 (keyword) and TF-IDF (semantic similarity):
-
-| Dataset      | FTS4 Latency | Full-scan Latency | Improvement |
-|--------------|--------------|-------------------|-------------|
-| 1K memories  | 5-10ms       | 50-100ms          |    ~10x     |
-| 10K memories | 10-20ms      | 500-2000ms        |    ~100x    |
+Hybrid search uses SQLite FTS4 to select keyword candidates, then TF-IDF cosine similarity helps rank those candidates. Reranking cannot recover a record excluded by the candidate search.
 
 Scoring: `HybridScore = (Keyword × 0.4) + (Semantic × 0.6) + bonuses (recency, weight, pin)`
 
@@ -128,11 +118,6 @@ app/src/main/java/com/m3mo/vault/
 ├── di/             # ServiceLocator
 ├── feature/        # Home, Add, Search, Review, Settings (MVVM)
 └── ui/             # Theme, Navigation, Shared Components
-
-app/src/test/java/com/m3mo/vault/test/patent/
-├── SmartDecayPatentTest.kt       # Ablation, scale, factor isolation tests
-├── NaiveDecayStrategy.kt         # Baseline for comparison
-└── PatentTestDataGenerator.kt    # Synthetic + randomized data generation
 ```
 
 ## Implementation & Running
@@ -143,24 +128,18 @@ git clone https://github.com/PhantomCyclops0079/m3mo-vault.git
 
 # Open in Android Studio (Ladybug or newer)
 # Sync Gradle, then Run on device/emulator (API 26+)
-
-# Run patent validation tests (no device needed)
-./gradlew :app:testDebugUnitTest --tests "com.m3mo.vault.test.patent.SmartDecayPatentTest"
 ```
 
 ## Current Status
 
-The app is a functional MVP. All 4 tabs work (Home, Search, Review, Settings). Tested on Pixel 8 Pro with zero crashes at current version.
+This is a prototype with Home, Search, Review, and Settings screens. It has been tested on Pixel 8 Pro. Development is currently paused.
 
-**What works:** Create/edit/delete memories, type filtering, hybrid search with 3 modes, weekly review generation, SmartDecay background scheduling, worker status monitoring, cache statistics.
+**Features:** Local entry storage, type filtering, three search modes, weekly review generation, background maintenance scheduling, worker status monitoring, and cache statistics.
 
-**Known limitations:** No prefix search (must type full words), no task completion checkbox, no pin/unpin from UI, TF-IDF semantic matching is word-frequency based (not deep semantic understanding). 
-No local LLM implementation so far, but might be updated in future versions, and my current choice would be Gemma3-1B-IT on Kaggle.
+**Known limitations:** No prefix-search UI, no task completion checkbox, no pin/unpin or rating controls, and no language-model integration. TF-IDF matching relies on word overlap and term weighting.
+
+The optimization pipeline and user controls still have unfinished connections. The background decay worker has a separate execution path.
 
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
-
-The SmartDecay algorithm is subject to US Provisional Patent Application #63/942,399. 
-The patent covers the specific combination of multi-factor decay with device-resource-aware semantic matching in an offline pipeline. 
-Using this code for personal or educational purposes is fine. Commercial use of the patented algorithm should consider the patent status.
