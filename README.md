@@ -2,7 +2,7 @@
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0-blue.svg)](https://kotlinlang.org)
 [![Android](https://img.shields.io/badge/Min%20SDK-26-green.svg)](https://developer.android.com)
-![Status](https://img.shields.io/badge/Status-Prototype-purple.svg)
+[![Status](https://img.shields.io/badge/Status-Prototype-purple.svg)]()
 
 An offline Android prototype for storing personal facts, episodes, and tasks. It combines local SQLite storage, FTS4 search, TF-IDF ranking, and a rule-based maintenance algorithm called SmartDecay.
 
@@ -14,11 +14,13 @@ The app has no cloud-sync service. Android system backup is enabled in this buil
 
 ## What It Does
 
-You enter short text memories (facts, episodes, tasks). 
+You enter short text memories (facts, episodes, tasks).
 
 The app stores entries locally in SQLite. A background worker is scheduled daily to apply SmartDecay to eligible records: unpinned entries in STORED or OPTIMIZED state with weight above 1. Device constraints and batch limits affect when records are processed. New entries start in NEW, outside that eligible set.
 
 **SmartDecay** calculates weight changes using record age, access history, ratings, content length, and configurable decay settings. Pin bypasses decay. Given the same inputs, configuration, and processing time, the calculation is deterministic and returns a factor breakdown.
+
+In a JVM unit-test benchmark, the decay calculation itself processed 10,500 synthetic memories in 8.16ms. That figure covers only the in-memory factor calculation; it was not measured on an Android device, and does not include the database reads and writes that surround it in a real run.
 
 ## What It Doesn't Do (Yet)
 
@@ -130,7 +132,7 @@ git clone https://github.com/PhantomCyclops0079/m3mo-vault.git
 
 ## Current Status
 
-This is a prototype with Home, Search, Review, and Settings screens. It has been tested on Pixel 8 Pro. Development is currently paused.
+This is a prototype with Home, Search, Review, and Settings screens. I installed it on a Pixel 8 Pro and used it for day-to-day entries; that is informal personal use, not a QA pass or a device benchmark. Development is currently paused.
 
 **Features:** Local entry storage, type filtering, three search modes, weekly review generation, background maintenance scheduling, worker status monitoring, and cache statistics.
 
