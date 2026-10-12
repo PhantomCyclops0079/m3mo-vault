@@ -13,15 +13,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 /**
- * TfIdfSemanticMatcher - TF-IDF based semantic search
- *
- * Implements ISemanticMatcher using TF-IDF vectorization.
- * Optimized for low-end devices with:
- * - Sub-30MB memory footprint
- * - Fast incremental updates
- * - Embedding caching
- *
- * Achieves 98.8% clustering accuracy on test datasets.
+ * Implements ISemanticMatcher using TF-IDF vectors and cosine similarity.
+ * Caches serialized vectors for reuse.
  */
 class TfIdfSemanticMatcher(
     private val vectorizer: TfIdfVectorizer = TfIdfVectorizer(),

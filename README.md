@@ -2,7 +2,7 @@
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0-blue.svg)](https://kotlinlang.org)
 [![Android](https://img.shields.io/badge/Min%20SDK-26-green.svg)](https://developer.android.com)
-[![Status](https://img.shields.io/badge/Status-MVP-purple.svg)]()
+![Status](https://img.shields.io/badge/Status-Prototype-purple.svg)
 
 An offline Android prototype for storing personal facts, episodes, and tasks. It combines local SQLite storage, FTS4 search, TF-IDF ranking, and a rule-based maintenance algorithm called SmartDecay.
 
@@ -19,8 +19,6 @@ You enter short text memories (facts, episodes, tasks).
 The app stores entries locally in SQLite. A background worker is scheduled daily to apply SmartDecay to eligible records: unpinned entries in STORED or OPTIMIZED state with weight above 1. Device constraints and batch limits affect when records are processed. New entries start in NEW, outside that eligible set.
 
 **SmartDecay** calculates weight changes using record age, access history, ratings, content length, and configurable decay settings. Pin bypasses decay. Given the same inputs, configuration, and processing time, the calculation is deterministic and returns a factor breakdown.
-
-The algorithm is called **SmartDecay**. It's deterministic, explainable (every weight change has a traceable factor breakdown), and runs in under 9ms for 10,000+ memories.
 
 ## What It Doesn't Do (Yet)
 
