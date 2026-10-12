@@ -5,28 +5,10 @@ import com.m3mo.vault.domain.model.DecayResult
 import com.m3mo.vault.domain.model.MemoryItem
 
 /**
- * IDecayStrategy - SmartDecay Algorithm Interface
+ * Contract for calculating record decay and access-based weight boosts.
  *
- * US Provisional Patent #63/942,399: "SmartDecay" Technology
- *
- * This interface defines the contract for the intelligent memory decay
- * algorithm that achieves 16x weight differentiation on resource-constrained
- * mobile devices.
- *
- * The algorithm uses 7 factors to determine memory importance:
- * 1. Base decay rate
- * 2. Grace period protection (new memories protected)
- * 3. Recency penalty (older = faster decay)
- * 4. Frequency bonus (frequently accessed = slower decay)
- * 5. Confidence bonus (user-rated importance)
- * 6. Size penalty (large content = faster decay for resource management)
- * 7. Pin protection (user-pinned = no decay)
- *
- * Implementation Requirements:
- * - Must be deterministic given same inputs
- * - Must complete within time budget (see ResourceGovernor)
- * - Must preserve pinned memory weights
- * - Must respect min/max weight bounds (1-16)
+ * Implementations return the resulting weight, factor breakdown, and recommended
+ * lifecycle action. Callers are responsible for persisting those results.
  */
 interface IDecayStrategy {
 
@@ -68,7 +50,6 @@ interface IDecayStrategy {
      *
      * Memories may be skipped if:
      * - Pinned
-     * - In grace period
      * - Already at minimum weight
      * - Not in appropriate state
      */
@@ -84,7 +65,7 @@ interface IDecayStrategy {
  * Decay algorithm configuration
  *
  * These parameters tune the algorithm behavior.
- * Default values are optimized for typical usage patterns.
+ * Default thresholds can be adjusted for different maintenance policies.
  */
 data class DecayConfig(
     /**
@@ -94,7 +75,7 @@ data class DecayConfig(
     val decayPerRun: Int = 1,
 
     /**
-     * Grace period in days (new memories protected)
+     * Days during which the base contribution is cancelled
      * Default: 7 days
      */
     val gracePeriodDays: Int = 7,
@@ -153,7 +134,7 @@ data class DecayConfig(
 
     /**
      * Weight threshold for tombstoning
-     * Memories at this level for N cycles get tombstoned
+     * Changed records at or below this weight are recommended for tombstoning
      */
     val tombstoneThreshold: Int = 1
 ) {

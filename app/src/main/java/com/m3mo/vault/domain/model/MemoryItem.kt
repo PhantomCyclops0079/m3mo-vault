@@ -41,7 +41,7 @@ data class MemoryItem(
 
     /**
      * Weight for SmartDecay algorithm (1-16 scale)
-     * Higher weight = more important, decays slower
+     * Used by maintenance rules and search scoring.
      */
     val weight: Int,
 

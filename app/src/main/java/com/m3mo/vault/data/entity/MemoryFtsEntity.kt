@@ -11,12 +11,11 @@ import androidx.room.FtsOptions
     tokenizer = FtsOptions.TOKENIZER_UNICODE61
 )
 data class MemoryFtsEntity(
-    // 字段名必须与 MemoryEntity 完全一致！
+    // FTS column names must match the content table's column names.
 
     @ColumnInfo(name = "content")
     val content: String,
 
-    // ⚡️ 修复点：从 "normalized_content" 改为 "normalizedContent"
     @ColumnInfo(name = "normalizedContent")
     val normalizedContent: String,
 

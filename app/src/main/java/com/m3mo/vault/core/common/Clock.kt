@@ -19,8 +19,7 @@ import java.util.concurrent.atomic.AtomicLong
  * 3. SmartDecay - Critical for decay calculations (daysSinceTouch)
  * 4. Weekly Review - Needs deterministic week boundaries
  *
- * This is CRITICAL for the patent's SmartDecay algorithm
- * which depends on accurate time calculations.
+ * An injected clock makes time-dependent calculations repeatable in tests.
  */
 interface Clock {
     /**

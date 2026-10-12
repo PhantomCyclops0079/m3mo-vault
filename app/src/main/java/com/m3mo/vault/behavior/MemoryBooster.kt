@@ -11,7 +11,7 @@ import com.m3mo.vault.memory.decay.SmartDecayStrategy
 
 class MemoryBooster(
     private val repository: IMemoryRepository,
-    private val decayStrategy: SmartDecayStrategy, // 保持注入，未来可能用到
+    private val decayStrategy: SmartDecayStrategy,
     private val clock: Clock,
     private val logger: Logger
 ) {
@@ -21,7 +21,7 @@ class MemoryBooster(
         const val BOOST_EDIT = 3
         const val BOOST_SHARE = 2
         const val BOOST_REVIEW_KEEP = 2
-        const val MAX_WEIGHT = 16 // ⚡ 修复点：补充最大权重定义
+        const val MAX_WEIGHT = 16
 
         private const val BOOST_COOLDOWN_MS = 5 * 60 * 1000L
     }
@@ -48,7 +48,7 @@ class MemoryBooster(
         return when (val memoryResult = repository.getById(memoryId)) {
             is AppResult.Success -> {
                 val memory = memoryResult.value
-                // ⚡ 修复点：使用标准的 copy 方法实现不可变更新
+                // Record access using an immutable update.
                 val updated = memory.copy(
                     lastAccessedAt = clock.nowMillis(),
                     accessCount = memory.accessCount + 1,
@@ -71,7 +71,7 @@ class MemoryBooster(
             is AppResult.Success -> {
                 val memory = memoryResult.value
 
-                // ⚡ 修复点：重写加权逻辑，适配新的 MemoryItem 和乐观锁
+                // Apply the boost and increment the optimistic-lock version.
                 val boosted = when (action) {
                     BoostAction.PIN -> {
                         memory.copy(

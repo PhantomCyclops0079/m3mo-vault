@@ -19,7 +19,7 @@ import com.m3mo.vault.domain.model.ProcessingState
 /**
  * RunDecayUseCase - Executes SmartDecay optimization
  *
- * This is the heart of the patent-pending SmartDecay algorithm.
+ * Coordinates record selection, decay calculation, and persistence.
  * It processes memories in batches, applying the 7-factor decay
  * algorithm to each eligible memory.
  */
